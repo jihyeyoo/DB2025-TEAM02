@@ -3,6 +3,7 @@ package DAO;
 import java.sql.*;
 
 import main.AppMain;
+import util.PasswordHasher;
 
 public class SignUpDAO {
 	
@@ -24,11 +25,13 @@ public class SignUpDAO {
 
     public boolean registerUser(String loginId, String userName, String password) {
         String sql = "INSERT INTO Users (login_id, user_name, password_hash) VALUES (?, ?, ?)";
+        
+        String hashedPassword = PasswordHasher.hashPassword(password); // 해시 처리
 
         try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
             stmt.setString(1, loginId);
             stmt.setString(2, userName);
-            stmt.setString(3, password);
+            stmt.setString(3, hashedPassword);
 
             int rows = stmt.executeUpdate();
             return rows > 0;
