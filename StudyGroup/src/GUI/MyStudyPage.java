@@ -11,13 +11,17 @@ import java.util.List;
 
 public class MyStudyPage extends JFrame {
 
-    public MyStudyPage() {
+    private String loginId;
+
+    public MyStudyPage(String loginId) {
+        this.loginId = loginId;
+
         setTitle("자기 스터디 조회 페이지");
         setSize(900, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies("지혜");
+        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(loginId);
 
         String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "탈퇴"};
         Object[][] data = new Object[studyList.size()][5];
@@ -42,7 +46,7 @@ public class MyStudyPage extends JFrame {
         table.getColumn("정보").setCellRenderer(new InfoButtonRenderer());
         table.getColumn("정보").setCellEditor(new InfoButtonEditor(new JCheckBox(), studyList));
         table.getColumn("탈퇴").setCellRenderer(new WithdrawButtonRenderer());
-        table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList));
+        table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, loginId));
 
         JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane);
@@ -55,6 +59,7 @@ public class MyStudyPage extends JFrame {
         public InfoButtonRenderer() {
             setOpaque(true);
         }
+
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             setText("정보 보기");
@@ -62,13 +67,14 @@ public class MyStudyPage extends JFrame {
         }
     }
 
-    // 탈퇴 버튼 렌더러 (빨간색)
+    // 탈퇴 버튼 렌더러
     class WithdrawButtonRenderer extends JButton implements TableCellRenderer {
         public WithdrawButtonRenderer() {
             setOpaque(true);
             setForeground(Color.WHITE);
             setBackground(Color.RED);
         }
+
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             setText("탈퇴");
@@ -122,10 +128,12 @@ public class MyStudyPage extends JFrame {
         private boolean clicked;
         private List<MyStudyDTO> list;
         private int currentRow;
+        private String loginId;
 
-        public WithdrawButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list) {
+        public WithdrawButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, String loginId) {
             super(checkBox);
             this.list = list;
+            this.loginId = loginId;
             button = new JButton("탈퇴");
             button.setForeground(Color.WHITE);
             button.setBackground(Color.RED);
@@ -146,11 +154,11 @@ public class MyStudyPage extends JFrame {
                         "정말로 " + selected.getStudyName() + " 스터디에서 탈퇴하시겠습니까?",
                         "탈퇴 확인", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), "지혜");
+                    boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), loginId);
                     if (result) {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다.");
                         dispose();
-                        new MyStudyPage();
+                        new MyStudyPage(loginId); // 새로고침
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
                     }
@@ -170,7 +178,8 @@ public class MyStudyPage extends JFrame {
         }
     }
 
+    // 테스트용 메인 (실제 실행 시에는 loginId 전달해야 함)
     public static void main(String[] args) {
-        new MyStudyPage();
+        new MyStudyPage("test_login_id"); // 여기도 loginId 전달
     }
 }
