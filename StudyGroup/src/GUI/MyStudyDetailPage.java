@@ -6,7 +6,7 @@ import DTO.StudyMemberDTO;
 import DTO.RuleDTO;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class MyStudyDetailPage extends JFrame {
         MyStudyDetailDTO summary = dao.getStudySummary(studyId);
         List<StudyMemberDTO> members = dao.getMemberList(studyId);
         RuleDTO rule = dao.getRuleInfo(studyId);
-        boolean isLeader = dao.isLeader("지혜", studyId); // ← 로그인 사용자 이름
+        boolean isLeader = dao.isLeader("지혜", studyId); // 로그인 사용자 이름
 
         // 2. 상단: 통계 요약
         JPanel topPanel = new JPanel(new GridLayout(0, 1));
@@ -37,11 +37,15 @@ public class MyStudyDetailPage extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         // 3. 중단: 참여자 목록 테이블
-        String[] cols = isLeader ?
-                new String[]{"이름", "누적 벌금", "관리"} :
-                new String[]{"이름", "누적 벌금"};
-        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        String[] cols = isLeader ? new String[]{"이름", "누적 벌금", "관리"} : new String[]{"이름", "누적 벌금"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            public boolean isCellEditable(int row, int column) {
+                return isLeader && column == 2;
+            }
+        };
+
         JTable table = new JTable(model);
+        table.setRowHeight(30);
 
         for (StudyMemberDTO m : members) {
             if (isLeader) {
@@ -49,9 +53,9 @@ public class MyStudyDetailPage extends JFrame {
                 kickBtn.setForeground(Color.RED);
                 kickBtn.addActionListener(e -> {
                     int confirm = JOptionPane.showConfirmDialog(this,
-                            m.getUserName() + "님을 정말 강퇴하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
+                            m.getUserName() + "님을 강퇴하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
                     if (confirm == JOptionPane.YES_OPTION) {
-                        // TODO: 실제 강퇴 로직 작성
+                        // TODO: 강퇴 로직
                         JOptionPane.showMessageDialog(this, m.getUserName() + " 강퇴 완료 (가상)");
                     }
                 });
@@ -61,8 +65,13 @@ public class MyStudyDetailPage extends JFrame {
             }
         }
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        // 버튼이 정상 출력되도록 렌더러/에디터 설정
+        if (isLeader) {
+            table.getColumn("관리").setCellRenderer(new ButtonRenderer());
+            table.getColumn("관리").setCellEditor(new ButtonEditor(new JCheckBox()));
+        }
+
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
         // 4. 하단: 규칙 정보
         JPanel rulePanel = new JPanel(new GridLayout(0, 1));
@@ -81,5 +90,33 @@ public class MyStudyDetailPage extends JFrame {
 
         add(rulePanel, BorderLayout.SOUTH);
         setVisible(true);
+    }
+
+    // 내부 클래스: 버튼 셀 렌더러
+    class ButtonRenderer implements TableCellRenderer {
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
+            return (Component) value;
+        }
+    }
+
+    // 내부 클래스: 버튼 셀 에디터
+    class ButtonEditor extends DefaultCellEditor {
+        private JButton button;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            button = (JButton) value;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            return button;
+        }
     }
 }
