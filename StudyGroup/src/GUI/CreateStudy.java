@@ -87,6 +87,19 @@ public class CreateStudy extends JFrame {
         });
 
         createBtn.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            String desc = descriptionArea.getText().trim();
+            String start = startDateField.getText().trim();
+            String end = endDateField.getText().trim();
+            String cert = (String) certMethodBox.getSelectedItem();
+            String depositStr = depositField.getText().trim();
+
+            // 입력 유효성 검사
+            if (name.isEmpty() || desc.isEmpty() || start.isEmpty() || end.isEmpty() || depositStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "모든 항목을 입력해주세요.");
+                return;
+            }
+
             try {
                 String name = nameField.getText().trim();
                 String desc = descriptionArea.getText().trim();
