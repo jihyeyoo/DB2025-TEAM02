@@ -2,8 +2,10 @@ package GUI;
 
 import javax.swing.*;
 
+import DTO.UserDTO;
+
 public class RefundInfo extends JFrame {
-    public RefundInfo(String loginId) {
+    public RefundInfo(UserDTO user) {
         setTitle("환급 정보");
         setSize(300, 200);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

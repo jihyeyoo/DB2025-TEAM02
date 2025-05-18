@@ -2,26 +2,22 @@ package GUI;
 
 import DAO.MyStudyDAO;
 import DTO.MyStudyDTO;
+import DTO.UserDTO;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 
 public class MyStudyPage extends JFrame {
 
-    private String loginId;
-
-    public MyStudyPage(String loginId) {
-        this.loginId = loginId;
-
+    public MyStudyPage(UserDTO user) {
         setTitle("자기 스터디 조회 페이지");
         setSize(900, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(loginId);
+        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
 
         String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "탈퇴"};
         Object[][] data = new Object[studyList.size()][5];
@@ -44,13 +40,11 @@ public class MyStudyPage extends JFrame {
         JTable table = new JTable(model);
         table.setRowHeight(30);
         table.getColumn("정보").setCellRenderer(new InfoButtonRenderer());
-        table.getColumn("정보").setCellEditor(new InfoButtonEditor(new JCheckBox(), studyList));
+        table.getColumn("정보").setCellEditor(new InfoButtonEditor(new JCheckBox(), studyList, user));
         table.getColumn("탈퇴").setCellRenderer(new WithdrawButtonRenderer());
-        table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, loginId));
+        table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, user));
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane);
-
+        add(new JScrollPane(table));
         setVisible(true);
     }
 
@@ -88,10 +82,12 @@ public class MyStudyPage extends JFrame {
         private boolean clicked;
         private List<MyStudyDTO> list;
         private int currentRow;
+        private UserDTO user;  // ✅ UserDTO 추가
 
-        public InfoButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list) {
+        public InfoButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, UserDTO user) {
             super(checkBox);
             this.list = list;
+            this.user = user;
             button = new JButton("정보 보기");
             button.addActionListener(e -> fireEditingStopped());
         }
@@ -106,7 +102,8 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
-                new MyStudyDetailPage(selected.getStudyId());
+                // ✅ UserDTO 함께 전달
+                new MyStudyDetailPage(selected.getStudyId(), user);
             }
             clicked = false;
             return "정보 보기";
@@ -116,11 +113,8 @@ public class MyStudyPage extends JFrame {
             clicked = false;
             return super.stopCellEditing();
         }
-
-        protected void fireEditingStopped() {
-            super.fireEditingStopped();
-        }
     }
+
 
     // 탈퇴 버튼 클릭 이벤트
     class WithdrawButtonEditor extends DefaultCellEditor {
@@ -128,12 +122,12 @@ public class MyStudyPage extends JFrame {
         private boolean clicked;
         private List<MyStudyDTO> list;
         private int currentRow;
-        private String loginId;
+        private UserDTO user;
 
-        public WithdrawButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, String loginId) {
+        public WithdrawButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, UserDTO user) {
             super(checkBox);
             this.list = list;
-            this.loginId = loginId;
+            this.user = user;
             button = new JButton("탈퇴");
             button.setForeground(Color.WHITE);
             button.setBackground(Color.RED);
@@ -154,11 +148,11 @@ public class MyStudyPage extends JFrame {
                         "정말로 " + selected.getStudyName() + " 스터디에서 탈퇴하시겠습니까?",
                         "탈퇴 확인", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), loginId);
+                    boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), user);
                     if (result) {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다.");
                         dispose();
-                        new MyStudyPage(loginId); // 새로고침
+                        new MyStudyPage(user); // 새로고침
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
                     }
@@ -172,14 +166,6 @@ public class MyStudyPage extends JFrame {
             clicked = false;
             return super.stopCellEditing();
         }
-
-        protected void fireEditingStopped() {
-            super.fireEditingStopped();
-        }
-    }
-
-    // 테스트용 메인 (실제 실행 시에는 loginId 전달해야 함)
-    public static void main(String[] args) {
-        new MyStudyPage("test_login_id"); // 여기도 loginId 전달
     }
 }
+

@@ -1,6 +1,9 @@
 package GUI;
 
 import javax.swing.*;
+
+import DTO.UserDTO;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -12,7 +15,7 @@ public class MyPage extends JFrame {
 
     private JLabel nameLabel, pointLabel;
 
-    public MyPage(String loginId) {
+    public MyPage(UserDTO user) {
         setTitle("마이페이지");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -22,11 +25,11 @@ public class MyPage extends JFrame {
         welcomeLabel.setBounds(150, 20, 100, 25);
         add(welcomeLabel);
 
-        nameLabel = new JLabel("이름: ");
+        nameLabel = new JLabel("이름: " +user.getUserName());
         nameLabel.setBounds(50, 70, 300, 25);
         add(nameLabel);
 
-        pointLabel = new JLabel("보유 포인트: ");
+        pointLabel = new JLabel("보유 포인트: " + user.getPoints());
         pointLabel.setBounds(50, 110, 300, 25);
         add(pointLabel);
 
@@ -53,41 +56,19 @@ public class MyPage extends JFrame {
         chargeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose(); // 마이페이지 닫고
-                new ChargePoint(loginId); // 다음 단계에서 만들 예정
+                dispose();
+                new ChargePoint(user);  // UserDTO 전달
             }
         });
-        
-        // 연결만
+
         studyButton.addActionListener(e -> {
-            dispose(); // 마이페이지 닫고
-            new MyStudyPage(loginId); // ← 여기에 MyStudyPage 연결
+            dispose();
+            new MyStudyPage(user);  // UserDTO 전달
         });
 
-        refundButton.addActionListener(e -> new RefundInfo(loginId));
-        infoButton.addActionListener(e -> new UserInfo(loginId));
-
-        // 사용자 정보 불러오기
-        loadUserInfo(loginId);
+        refundButton.addActionListener(e -> new RefundInfo(user));
+        infoButton.addActionListener(e -> new UserInfo(user));
 
         setVisible(true);
-    }
-
-    private void loadUserInfo(String loginId) {
-        String sql = "SELECT user_name, points FROM Users WHERE login_id = ?";
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setString(1, loginId);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                String name = rs.getString("user_name");
-                int points = rs.getInt("points");
-
-                nameLabel.setText("이름: " + name);
-                pointLabel.setText("보유 포인트: " + points + "P");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

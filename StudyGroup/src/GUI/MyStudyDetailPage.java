@@ -4,6 +4,7 @@ import DAO.MyStudyDetailDAO;
 import DTO.MyStudyDetailDTO;
 import DTO.StudyMemberDTO;
 import DTO.RuleDTO;
+import DTO.UserDTO;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -14,7 +15,7 @@ public class MyStudyDetailPage extends JFrame {
 
     private MyStudyDetailDAO dao = new MyStudyDetailDAO();
 
-    public MyStudyDetailPage(int studyId) {
+    public MyStudyDetailPage(int studyId, UserDTO user) {
         setTitle("📘 마이스터디 상세 페이지");
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -24,7 +25,7 @@ public class MyStudyDetailPage extends JFrame {
         MyStudyDetailDTO summary = dao.getStudySummary(studyId);
         List<StudyMemberDTO> members = dao.getMemberList(studyId);
         RuleDTO rule = dao.getRuleInfo(studyId);
-        boolean isLeader = dao.isLeader("지혜", studyId); // 로그인 사용자 이름
+        boolean isLeader = dao.isLeader(user, studyId); 
 
         // 2. 상단: 통계 요약
         JPanel topPanel = new JPanel(new GridLayout(0, 1));
@@ -65,7 +66,7 @@ public class MyStudyDetailPage extends JFrame {
             }
         }
 
-        // 버튼이 정상 출력되도록 렌더러/에디터 설정
+        // 버튼 정상 출력 렌더러/에디터 설정
         if (isLeader) {
             table.getColumn("관리").setCellRenderer(new ButtonRenderer());
             table.getColumn("관리").setCellEditor(new ButtonEditor(new JCheckBox()));
@@ -92,7 +93,7 @@ public class MyStudyDetailPage extends JFrame {
         setVisible(true);
     }
 
-    // 내부 클래스: 버튼 셀 렌더러
+    // 버튼 렌더러
     class ButtonRenderer implements TableCellRenderer {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus,
@@ -101,7 +102,7 @@ public class MyStudyDetailPage extends JFrame {
         }
     }
 
-    // 내부 클래스: 버튼 셀 에디터
+    // 버튼 에디터
     class ButtonEditor extends DefaultCellEditor {
         private JButton button;
 

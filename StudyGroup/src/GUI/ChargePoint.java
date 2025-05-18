@@ -1,6 +1,10 @@
 package GUI;
 
 import javax.swing.*;
+
+import DAO.MyPageDAO;
+import DTO.UserDTO;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -10,7 +14,7 @@ import main.AppMain;
 
 public class ChargePoint extends JFrame {
 
-    public ChargePoint(String loginId) {
+    public ChargePoint(UserDTO user) {
         setTitle("포인트 충전");
         setSize(400, 250);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -39,22 +43,20 @@ public class ChargePoint extends JFrame {
                         JOptionPane.showMessageDialog(null, "1 이상의 금액만 입력 가능합니다.");
                         return;
                     }
-
-                    String sql = "UPDATE Users SET points = points + ? WHERE login_id = ?";
-                    try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-                        stmt.setInt(1, chargeAmount);
-                        stmt.setString(2, loginId);
-
-                        int result = stmt.executeUpdate();
-
-                        if (result == 1) {
+                    
+                    MyPageDAO dao = new MyPageDAO();
+                    boolean success = dao.chargePoints(user.getUserId(), chargeAmount);
+                    
+                    	if (success) {
                             JOptionPane.showMessageDialog(null, "포인트 충전 완료!");
                             dispose();
-                            new MyPage(loginId); // 마이페이지로 이동
+                            user.setPoints(user.getPoints() + chargeAmount);
+                            new MyPage(user);
+
                         } else {
                             JOptionPane.showMessageDialog(null, "충전에 실패했습니다.");
                         }
-                    }
+                    
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(null, "숫자만 입력해주세요.");
                 } catch (Exception ex) {

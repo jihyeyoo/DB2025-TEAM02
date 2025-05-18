@@ -1,7 +1,6 @@
 package DAO;
 
 import java.sql.*;
-
 import main.AppMain;
 import util.PasswordHasher;
 

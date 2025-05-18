@@ -1,6 +1,6 @@
 package util;
 
-import java.security.*;
+import java.security.MessageDigest;
 
 public class PasswordHasher {
 
@@ -11,7 +11,7 @@ public class PasswordHasher {
 
             StringBuilder sb = new StringBuilder();
             for (byte b : hashedBytes) {
-                sb.append(String.format("%02x", b)); // 16진수로 변환
+                sb.append(String.format("%02x", b));
             }
 
             return sb.toString();
@@ -21,4 +21,3 @@ public class PasswordHasher {
         }
     }
 }
-

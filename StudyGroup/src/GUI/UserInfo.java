@@ -2,8 +2,10 @@ package GUI;
 
 import javax.swing.*;
 
+import DTO.UserDTO;
+
 public class UserInfo extends JFrame {
-    public UserInfo(String loginId) {
+    public UserInfo(UserDTO user) {
         setTitle("내 정보");
         setSize(300, 200);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

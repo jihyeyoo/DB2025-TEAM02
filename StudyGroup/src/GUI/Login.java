@@ -5,6 +5,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import DAO.LoginDAO;
+import DTO.LoginResultDTO;
+import DTO.LoginResultDTO.LoginStatus;
+import DTO.UserDTO;
 
 public class Login extends JFrame {
 
@@ -50,14 +53,19 @@ public class Login extends JFrame {
 
                 try {
                     LoginDAO dao = new LoginDAO();
-                    boolean success = dao.checkLogin(loginId, password);
+                    LoginResultDTO result = dao.login(loginId, password);
 
-                    if (success) {
-                        JOptionPane.showMessageDialog(null, "로그인 성공!");
+                    if (result.getStatus() == LoginStatus.SUCCESS) {
+                        UserDTO user = result.getUser();  // UserDTO 얻기
+                        JOptionPane.showMessageDialog(null, user.getUserName() + "님, 환영합니다!");
                         dispose();  // 로그인 창 닫기
-                        new MyPage(loginId);  // 마이페이지로 이동
+                        new MyPage(user);  // DTO 전달
+                    } else if (result.getStatus() == LoginStatus.INVALID_PASSWORD) {
+                        JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다.");
+                    } else if (result.getStatus() == LoginStatus.ID_NOT_FOUND) {
+                        JOptionPane.showMessageDialog(null, "존재하지 않는 아이디입니다.");
                     } else {
-                        JOptionPane.showMessageDialog(null, "로그인 실패. 아이디 또는 비밀번호 확인.");
+                        JOptionPane.showMessageDialog(null, "로그인 중 오류 발생.");
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -69,8 +77,8 @@ public class Login extends JFrame {
         // 회원가입 버튼 클릭 이벤트
         signupButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                dispose();        // 로그인 창 닫기
-                new SignUp();     // 회원가입 창 열기
+                dispose();
+                new SignUp();
             }
         });
 
