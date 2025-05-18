@@ -1,167 +1,212 @@
 package GUI;
 
+import DAO.CreateStudyDAO;
+import DTO.CreateStudyDTO;
+import main.AppMain;
+
 import javax.swing.*;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-
-
-
-/*
-
-
-목적: 새로운 스터디를 생성
-StudyGroups 테이블의 데이터를 입력 받는 구조를 GUI로 구성.
-
-현재는 DB 연동 없는 스탠드 얼론 버전 - 더미 데이터 만들어 둠. 추후 DAO/DTO 연동 시 메소드 넣어서 연결할 것 (TODO)
-DB2022 프로젝트의 ProductRegister 페이지 디자인 참고함.
-
-입력 값은 [[이름, 설명, 시작일, 종료일, 인증 방식, 보증금]]
-
-
-*/
-
-
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class CreateStudy extends JFrame {
 
-    // 입력 필드 선언 - 아래 6개의 필드는 사용자가 직접 작성하게 될 항목들
-    private JTextField nameField;               // 스터디 이름
-    private JTextArea descriptionArea;          // 스터디 설명(길게 쓸 수 있게 해둠)
-    private JTextField startDateField;          // 시작일
-    private JTextField endDateField;            // 종료일
-    private JComboBox<String> certMethodBox;    // 인증 방식 선택 콤보박스
-    private JTextField depositField;            // 보증금 입력칸
+    // 입력 필드 선언
+    private JTextField nameField, startDateField, endDateField, depositField;
+    private JTextArea descriptionArea;
+    private JComboBox<String> certMethodBox;
+    private final String[] certMethods = {"글", "사진", "영상"};  // 인증 방식 옵션
 
-    // 인증 방식 종류 - 일단 단순한 3개 정도만 선택지로 구성
-    private final String[] certMethods = {"글", "사진", "영상"};
+    private String loginId;  // 로그인한 사용자의 ID (study 생성 시 user_id 조회용)
 
-    // 창 구성 및 이벤트를 이곳에서 설정
-    public CreateStudy() {
+    // 생성자
+    public CreateStudy(String loginId) {
+        this.loginId = loginId;  // 전달받은 로그인 ID 저장
+
+        // 기본 프레임 설정
         setTitle("스터디 개설");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);                     // 창 크기를 고정 (TO DO: 창 사이즈 고정/표준화)
-        setResizable(false);
-        setLocationRelativeTo(null);            // 화면을 중앙에 띄우는 것으로 배치
-        Container c = getContentPane();
-        c.setLayout(null);                      // 절대 좌표를 이용해 배치하는 것으로 설정
-        c.setBackground(Color.WHITE);           
-        
-     // 폰트를 지정 - DB2022 프로젝트 참고함.
-        Font titleFont = new Font("맑은 고딕", Font.BOLD, 30);     // 페이지 상단 제목
-        Font labelFont = new Font("맑은 고딕", Font.BOLD, 20);     // 라벨 텍스트
-        Font inputFont = new Font("맑은 고딕", Font.PLAIN, 18);    // 입력창 내부 폰트
+        setSize(1000, 700);
+        setLocationRelativeTo(null);
+        getContentPane().setLayout(null);
+        getContentPane().setBackground(Color.WHITE);
 
-        // 제목 라벨 설정
+        // 폰트 설정
+        Font titleFont = new Font("맑은 고딕", Font.BOLD, 26);
+        Font labelFont = new Font("맑은 고딕", Font.BOLD, 16);
+        Font inputFont = new Font("맑은 고딕", Font.PLAIN, 15);
+
+        // 타이틀 라벨
         JLabel title = new JLabel("스터디 개설");
         title.setFont(titleFont);
-        title.setBounds(400, 30, 400, 40);  // 위치 및 크기 지정
-        c.add(title);
+        title.setBounds(400, 30, 300, 40);
+        getContentPane().add(title);
 
-        // 제목 아래에 작게 입력 안내
         JLabel notice = new JLabel("* 모든 항목을 입력해주세요.");
-        notice.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        notice.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
         notice.setBounds(400, 70, 300, 20);
-        c.add(notice);
+        getContentPane().add(notice);
 
-        // 라벨 및 필드 위치를 위한 좌표값 설정
-        int labelX = 200, inputX = 550, width = 300, height = 40;
-        int baseY = 100, spacing = 70, yOffset = 0;
+        // 입력 필드 위치 설정용 좌표 변수
+        int labelX = 200, inputX = 550, width = 300, height = 30;
+        int baseY = 110;
+        int spacing = 70;
+        int yOffset = 0;
 
-        // 각 항목명 및 해당 입력 필드를 구성
-        String[] labels = {"스터디 이름", "스터디 소개", "시작일 (YYYY-MM-DD)", "종료일 (YYYY-MM-DD)", "인증 방식", "보증금 (원)"};
-        JComponent[] inputs = {
-            nameField = new JTextField(),
-            new JScrollPane(descriptionArea = new JTextArea(4, 20)),
-            startDateField = new JTextField(),
-            endDateField = new JTextField(),
-            certMethodBox = new JComboBox<>(certMethods),
-            depositField = new JTextField()
-        };
+        // 스터디 이름 입력
+        JLabel nameLabel = new JLabel("스터디 이름:");
+        nameLabel.setFont(labelFont);
+        nameLabel.setBounds(labelX, baseY + yOffset, 150, height);
+        getContentPane().add(nameLabel);
 
-        // 라벨 및 필드를 화면에 배치 (줄마다 라벨/입력칸 쌍으로 추가)
-        for (int i = 0; i < labels.length; i++) {
-            JLabel lbl = new JLabel(labels[i]);
-            lbl.setFont(labelFont);
-            int y = baseY + i * spacing + yOffset;
-            lbl.setBounds(labelX, y, 300, height);
-            c.add(lbl);
+        nameField = new JTextField();
+        nameField.setBounds(inputX, baseY + yOffset, width, height);
+        nameField.setFont(inputFont);
+        getContentPane().add(nameField);
+        yOffset += spacing;
 
-            JComponent input = inputs[i];
-            input.setFont(inputFont);
+        // 스터디 소개 입력 (여러 줄 가능)
+        JLabel descLabel = new JLabel("스터디 소개:");
+        descLabel.setFont(labelFont);
+        descLabel.setBounds(labelX, baseY + yOffset, 150, height);
+        getContentPane().add(descLabel);
 
-            if (input instanceof JScrollPane scroll) {
-                scroll.setBounds(inputX, y, width, 80);  // 설명칸은 높이 크게
-                yOffset += 40;                           // 다음 줄 간격 확보 (Description이랑 붙어서 둠.)
-                c.add(scroll);
-            } else {
-                input.setBounds(inputX, y, width, height);
-                c.add(input);
-            }
-        }
+        descriptionArea = new JTextArea();
+        descriptionArea.setFont(inputFont);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
 
-        // 버튼
+        JScrollPane scrollPane = new JScrollPane(descriptionArea);
+        scrollPane.setBounds(inputX, baseY + yOffset, width, 80);
+        getContentPane().add(scrollPane);
+        yOffset += spacing + 40;
+
+        // 시작일
+        JLabel startLabel = new JLabel("시작일 (YYYY-MM-DD):");
+        startLabel.setFont(labelFont);
+        startLabel.setBounds(labelX, baseY + yOffset, 200, height);
+        getContentPane().add(startLabel);
+
+        startDateField = new JTextField();
+        startDateField.setBounds(inputX, baseY + yOffset, width, height);
+        startDateField.setFont(inputFont);
+        getContentPane().add(startDateField);
+        yOffset += spacing;
+
+        // 종료일
+        JLabel endLabel = new JLabel("종료일 (YYYY-MM-DD):");
+        endLabel.setFont(labelFont);
+        endLabel.setBounds(labelX, baseY + yOffset, 200, height);
+        getContentPane().add(endLabel);
+
+        endDateField = new JTextField();
+        endDateField.setBounds(inputX, baseY + yOffset, width, height);
+        endDateField.setFont(inputFont);
+        getContentPane().add(endDateField);
+        yOffset += spacing;
+
+        // 인증 방식 선택 (ComboBox)
+        JLabel certLabel = new JLabel("인증 방식:");
+        certLabel.setFont(labelFont);
+        certLabel.setBounds(labelX, baseY + yOffset, 200, height);
+        getContentPane().add(certLabel);
+
+        certMethodBox = new JComboBox<>(certMethods);
+        certMethodBox.setBounds(inputX, baseY + yOffset, width, height);
+        certMethodBox.setFont(inputFont);
+        getContentPane().add(certMethodBox);
+        yOffset += spacing;
+
+        // 보증금 입력
+        JLabel depositLabel = new JLabel("보증금 (원):");
+        depositLabel.setFont(labelFont);
+        depositLabel.setBounds(labelX, baseY + yOffset, 200, height);
+        getContentPane().add(depositLabel);
+
+        depositField = new JTextField();
+        depositField.setBounds(inputX, baseY + yOffset, width, height);
+        depositField.setFont(inputFont);
+        getContentPane().add(depositField);
+
+        // 버튼 생성
         JButton createBtn = new JButton("개설");
-        JButton cancelBtn = new JButton("뒤로가기");		// 이건 StudyList랑 연결함.
+        JButton cancelBtn = new JButton("뒤로가기");
 
         createBtn.setFont(labelFont);
         cancelBtn.setFont(labelFont);
 
-        Color buttonColor = new Color(0xFF6472);  // 컬러는 DB2022 프로젝트 참고.
-        createBtn.setBackground(buttonColor);
+        createBtn.setBackground(new Color(0xFF6472));
         createBtn.setForeground(Color.WHITE);
         cancelBtn.setBackground(Color.LIGHT_GRAY);
 
-        createBtn.setBounds(400, 550, 130, 50);
-        cancelBtn.setBounds(550, 550, 130, 50);
-        c.add(createBtn);
-        c.add(cancelBtn);
+        createBtn.setBounds(400, 570, 130, 40);
+        cancelBtn.setBounds(550, 570, 130, 40);
 
-        // 개설 버튼 클릭 시 이벤트 - 유효성 검사
+        getContentPane().add(createBtn);
+        getContentPane().add(cancelBtn);
+
+        // 스터디 개설 버튼 이벤트
         createBtn.addActionListener(e -> {
-            try {
-                // 입력값 읽기
-                String name = nameField.getText().trim();
-                String desc = descriptionArea.getText().trim();
-                String start = startDateField.getText().trim();
-                String end = endDateField.getText().trim();
-                String cert = (String) certMethodBox.getSelectedItem();
-                String depositStr = depositField.getText().trim();
+            String name = nameField.getText().trim();
+            String desc = descriptionArea.getText().trim();
+            String start = startDateField.getText().trim();
+            String end = endDateField.getText().trim();
+            String cert = (String) certMethodBox.getSelectedItem();
+            String depositStr = depositField.getText().trim();
 
-                // 빈칸 검사
-                if (name.isEmpty() || desc.isEmpty() || start.isEmpty() || end.isEmpty() || depositStr.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "모든 항목을 입력해주세요.");
+            // 입력 유효성 검사
+            if (name.isEmpty() || desc.isEmpty() || start.isEmpty() || end.isEmpty() || depositStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "모든 항목을 입력해주세요.");
+                return;
+            }
+
+            try {
+                int deposit = Integer.parseInt(depositStr); // 숫자인지 확인
+                int userId = getUserIdByLoginId(loginId);   // loginId → user_id 조회
+
+                if (userId == -1) {
+                    JOptionPane.showMessageDialog(this, "사용자 정보를 찾을 수 없습니다.");
                     return;
                 }
 
-                // 날짜 형식 검사 - 실패 시 DateTimeParseException 발생
-                LocalDate startDate = LocalDate.parse(start);
-                LocalDate endDate = LocalDate.parse(end);
+                // DTO 생성 후 DAO로 삽입 요청
+                CreateStudyDTO dto = new CreateStudyDTO(name, userId, desc, start, end, cert, deposit);
+                boolean success = new CreateStudyDAO().insertStudy(dto);
 
-                // 보증금 숫자 검사 - 실패 시 NumberFormatException 발생
-                int deposit = Integer.parseInt(depositStr);
-                if (deposit < 0) throw new NumberFormatException();  // 음수 방지
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "스터디가 성공적으로 개설되었습니다.");
+                    dispose();
+                    new StudyList(loginId);  // 성공 시 목록으로 복귀
+                } else {
+                    JOptionPane.showMessageDialog(this, "개설 실패! (DB 확인)");
+                }
 
-                // 현재는 DB 연동 없고 팝업으로 올려만 둠.
-                JOptionPane.showMessageDialog(this, "스터디가 개설되었습니다! (임시)");
-
-                // 목록 페이지로 이동
-                new StudyList().setVisible(true);
-                dispose();
-
-            } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(this, "날짜는 YYYY-MM-DD 형식으로 입력해주세요.");
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "보증금은 0 이상의 숫자로 입력해주세요.");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "입력 처리 중 오류가 발생했습니다.");
+                JOptionPane.showMessageDialog(this, "입력 형식을 다시 확인해주세요.");
             }
         });
 
-        // 뒤로가기 버튼 클릭 시 - StudyList 
+        // 뒤로가기 버튼 이벤트
         cancelBtn.addActionListener(e -> {
-            new StudyList().setVisible(true);
             dispose();
+            new StudyList(loginId);  // 목록으로 돌아감
         });
+
+        setVisible(true);
+    }
+
+    // login_id로 user_id를 조회하는 메서드
+    private int getUserIdByLoginId(String loginId) {
+        String sql = "SELECT user_id FROM Users WHERE login_id = ?";
+        try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
+            ps.setString(1, loginId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("user_id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;  // 조회 실패 시 -1 반환
     }
 }

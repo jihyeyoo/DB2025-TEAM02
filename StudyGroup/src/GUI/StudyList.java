@@ -1,154 +1,137 @@
 package GUI;
 
+import DAO.StudyListDAO;
+import DTO.StudyListDTO;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-
-
-
-/*
-
-
-목적: 현재까지 생성한 모든 스터디 목록을 표시 - 핵심 정보인 study_id, name, description을 보여줌.
-
-create.sql의 StudyGroups 참고.
-현재는 DB 연동 없는 스탠드 얼론 버전 - 더미 데이터 만들어 둠. 추후 DAO/DTO 연동 시 메소드 넣어서 연결할 것 (TODO)
-DB2022 프로젝트 페이지 디자인 참고함.
-
-이외 리더의 이름이나 종료일, 보증금 금액은 세부 정보에서 확인할 수 있도록 함. (피드백에 따라 정보를 해당 페이지에 올리도록 추후 수정할 수 있음.)
-
-
-TO DO : DAO랑 DTO 상황 보고 Detail과 추후 연결 할 수 있도록 만들기.
-
- */
-
-
+import java.util.List;
 
 public class StudyList extends JFrame {
 
-    // 테이블&데이터 모델 선언
-    private JTable table;                         // 실제로 스터디 목록을 화면에 뿌려줄 테이블
-    private DefaultTableModel tableModel;         // 테이블 데이터 저장 및 관리하는 역할
+    // 테이블 구성에 필요한 컴포넌트들을 이곳에 선언
+    private JTable table;                       // 스터디 데이터를 보여주는 테이블
+    private DefaultTableModel tableModel;       // 테이블에 표시할 데이터를 관리하는 모델
+    private String loginId;                     // 현재 로그인한 사용자의 login_id를 기록 - 마이페이지와 연결
+    public StudyList(String loginId) {
+        this.loginId = loginId;  				// 생성자로 전달받은 로그인 ID를 저장
 
+        // 제목 프레임 설정
+        setTitle("스터디 목록");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1000, 700);
+        setLocationRelativeTo(null);
+        getContentPane().setLayout(null);  // 절대 위치 사용
+        getContentPane().setBackground(Color.WHITE);
 
-    // 창 구성 및 이벤트를 이곳에서 설정
-    public StudyList() {
-    	// 아래로는 프레임 속성을 정의
-        setTitle("스터디 목록");                             		// 창의 최상단 제목
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);    	 	// 닫기 시 프로그램을 종료
-        setSize(1000, 700);                               	  	// 창 크기를 고정 (TO DO: 창 사이즈 고정/표준화)
-        setLocationRelativeTo(null);                       	 	// 화면을 중앙에 띄우는 것으로 배치
-        setLayout(null);                                   	 	// 절대 좌표를 이용해 배치하는 것으로 설정
-        getContentPane().setBackground(Color.WHITE);        	// 배경색은 흰색 (DB 2022 프로젝트 참고함. 테마색 결정 시 이후 수정.)
-
-        // 폰트를 지정 - DB2022 프로젝트 참고함.
-        Font titleFont = new Font("맑은 고딕", Font.BOLD, 30);		// 제목
-        Font tableFont = new Font("맑은 고딕", Font.PLAIN, 15);   // 테이블
-        Font headerFont = new Font("맑은 고딕", Font.BOLD, 15);   // 테이블 헤더
-
-        // 제목 라벨 설정
+        // 타이틀 라벨 생성
         JLabel titleLabel = new JLabel("스터디 목록");
-        titleLabel.setFont(titleFont);
-        titleLabel.setBounds(400, 30, 300, 40); 				// x, y, width, height 순서
-        add(titleLabel);
+        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 24));
+        titleLabel.setBounds(420, 30, 200, 40);
+        getContentPane().add(titleLabel);
 
-        // 테이블 생성
-        String[] columnNames = {"번호", "스터디 이름", "설명"};		// 여기서 column의 이름을 지정
+        // 우상단에 마이페이지 버튼 생성
+        JButton myPageBtn = new JButton("마이페이지");
+        myPageBtn.setBounds(870, 20, 100, 30);
+        myPageBtn.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        getContentPane().add(myPageBtn);
+        
+        // 마이페이지 버튼 이벤트 처리
+        myPageBtn.addActionListener(e -> {
+            // 클릭 시 마이페이지 창으로 이동 - 이때, loginId 전달!!!
+            dispose();                   // 현재 창 없애고 마이페이지 호출
+            new MyPage(loginId);
+        });
+
+        // 테이블 초기 설정 필요
+        String[] columnNames = {"ID", "번호", "이름", "시작일", "종료일", "인증방식", "보증금"};  // 컬럼은 이렇게
         tableModel = new DefaultTableModel(columnNames, 0) {
             public boolean isCellEditable(int row, int column) {
-                return false;  									// 사용자가 셀을 직접 수정하지 못하게 막음.
+                return false; // 셀 수정은 일단 막았음. 수정 페이지에서 고칠 수 있도록 할 것.
             }
         };
 
         table = new JTable(tableModel);
-        table.setRowHeight(30);                 				// 행 높이
-        table.setFont(tableFont);               				// 테이블 text 폰트
-        table.setBackground(new Color(0xFFF8DC)); 				// 밝은 노란색 배경
-        table.getTableHeader().setFont(headerFont);  			// 헤더로 굵게 설정
+        table.setRowHeight(30);
+        table.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
 
-        JScrollPane scrollPane = new JScrollPane(table);  		// 스크롤 기능 넣음
-        scrollPane.setBounds(100, 100, 800, 450);         		// 중앙 배치
-        add(scrollPane);
+        // DB상에 기록된 ID는 사용자에게 보이지 않도록 숨기고 이후 그냥 카운팅해서 1,2,3...
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
 
-        // 버튼
-        JButton refreshBtn = new JButton("새로고침");				// DB 변동 사항 생기면 반영할 수 있도록.
-        JButton createBtn = new JButton("스터디 개설하기");			// CreateStudy로 연결.
+        // 스크롤 가능하게 함.
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBounds(50, 100, 880, 400);
+        getContentPane().add(scrollPane);
 
-        refreshBtn.setBounds(350, 570, 130, 50);
-        createBtn.setBounds(520, 570, 160, 50);
+        // 하단 버튼 두 가지 - 새로고침, 스터디 개설
+        JButton refreshBtn = new JButton("새로고침");
+        JButton createBtn = new JButton("스터디 개설");
 
-        Font btnFont = new Font("맑은 고딕", Font.BOLD, 16);
-        Color btnColor = new Color(0xFF6472); 					// 분홍빛 컬러 (DB2022참고)
+        refreshBtn.setBounds(320, 520, 150, 40);
+        createBtn.setBounds(500, 520, 150, 40);
 
+        // 버튼 디자인 설정 - 2022년도 프로젝트 디자인 참고함.
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 14);
+        Color btnColor = new Color(0xFF6472);
         refreshBtn.setFont(btnFont);
         createBtn.setFont(btnFont);
-
+        refreshBtn.setBackground(btnColor);
+        refreshBtn.setForeground(Color.WHITE);
         createBtn.setBackground(btnColor);
         createBtn.setForeground(Color.WHITE);
 
-        add(refreshBtn);
-        add(createBtn);
+        getContentPane().add(refreshBtn);
+        getContentPane().add(createBtn);
 
-     // 테이블 더블 클릭 시 Detail 페이지로 연결
-     // 현재는 DTO 전달 없이 디자인 테스트만 가능하도록 연결
-     // TO DO: 추후 StudyDetail(dto)와 같은 방식으로 데이터 전달 추가
-     table.addMouseListener(new MouseAdapter() {
-         public void mouseClicked(MouseEvent e) {
-             if (e.getClickCount() == 2) {
-                 new StudyDetail().setVisible(true);  // 기본 생성자 호출만 진행 (디자인 확인용)
-             }
-         }
-     });
-
-
-        // 개설 버튼 - CreateStudy 페이지로 이동
-        createBtn.addActionListener(e -> {
-            new CreateStudy().setVisible(true);  // 새 창 띄우기
-            dispose();                           // 현재 창 닫기
-        });
-
-        // 새로고침 버튼 - DB에서 데이터 불러오기 메소드...인데 현재는 그냥 더미데이터를 뿌려줍니다.
+        // 새로고침 버튼 이벤트 - 테이블 데이터 다시 불러오기
         refreshBtn.addActionListener(e -> loadStudyData());
 
-        // 프로그램 시작하는 시점에서 데이터 자동으로 불러올 수 있도록 호출
+        // 개설 버튼 이벤트 - CreateStudy 화면으로 이동. 이때 loginId 전달하면서 넘어감.
+        createBtn.addActionListener(e -> {
+            dispose();                    	// 현재 창 닫고 새로운 창으로 이동!
+            new CreateStudy(loginId);
+        });
+
+        // 테이블 행 더블 클릭 시 해당 스터디 상세 정보 페이지로 이동하도록 설정. 아니면 따로 버튼 만들어도?
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { 				// 더블 클릭으로 설정
+                    int row = table.getSelectedRow(); 		// 선택한 행 번호를 기록하는... 라인
+                    if (row != -1) {
+                        int studyId = (int) tableModel.getValueAt(row, 0); 	// 숨긴 DB상의 진짜 ID 값을 가져온다.
+                        dispose();  						// 현재 창 닫고 이동.
+                        new StudyDetail(studyId, loginId); 
+                    }
+                }
+            }
+        });
+
+        // 화면 로드 시 초기 데이터 표시 - 리프레시
         loadStudyData();
         setVisible(true);
     }
 
-    
-    
-/*
-
-스터디 목록을 테이블에 표시해 주는 함수
-아직 DB 연동을 못하는 상태 - 더미 데이터로 테스트 중. 
-
-*/
-    
-    
-    
+    // DAO에서 스터디 목록을 받아 테이블에 표시하는 함수
     private void loadStudyData() {
-        tableModel.setRowCount(0);  // 테이블 내용 초기화
+        tableModel.setRowCount(0);  					// 기존 데이터 초기화
+        StudyListDAO dao = new StudyListDAO();  		// DAO 호출
+        List<StudyListDTO> list = dao.getAllStudies();  // 전체 목록 불러오기
 
-        // name, description에 해당하는 테스트 데이터 
-        String[][] dummyData = {
-            {"스터디 이름 01", "이곳에는 스터디 설명을 적습니다."},
-            {"스터디 이름 02", "가나다라마바사 테스트를 진행합니다. 길어지면 표시가 어떻게 되는지도 테스트. 잘리는데 Detail에서 표시 되니까 상관 없나?"},
-            {"Study Set 03", "ABCEFGHELLO"},
-            {"Study Set 04", "ABCEFGHELLO"},
-            {"Study Set 05", "."},
-            {"Study Set 00", ""}
-        };
-
-        // study_id에 무관하게 인덱스 줄 수 있도록 새로운 배열을 생성
-        int index = 1;
-        for (String[] row : dummyData) {
-            tableModel.addRow(new Object[]{ index++, row[0], row[1] });
+        int index = 1;  								// 번호 열에 표시할 번호 - 1부터 시작.
+        for (StudyListDTO dto : list) {
+            tableModel.addRow(new Object[]{
+                dto.getStudyId(),        // DB의 스터디 고유 ID (보호를 위해 숨김 열)
+                index++,                 // 이건 사용자에게 표시되는 번호. 1부터 시작합니다.
+                dto.getName(),           // 스터디 이름
+                dto.getStartDate(),      // 시작일
+                dto.getEndDate(),        // 종료일
+                dto.getCertMethod(),     // 인증 방식 (글, 사진, 영상 등)
+                dto.getDeposit()         // 보증금
+            });
         }
-    }
-
-    // 테스트 하려고 메인을 여기에 뒀는데 나중에 수정하셔도 됩니다.
-    public static void main(String[] args) {
-        EventQueue.invokeLater(StudyList::new);
     }
 }
