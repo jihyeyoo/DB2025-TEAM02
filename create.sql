@@ -102,22 +102,12 @@ CREATE TABLE Deposits (
 #
 # # 01. 인증 자료 조회 시 사용자와 날짜 기준으로 빠르게 접근
 # -- 유저가 오늘 인증했는지 여부 조회할 때 사용
-<<<<<<< HEAD
 CREATE INDEX idx_dailycerts ON DailyCerts(user_id, cert_date);
 #
 # # 02. 반환되지 않은 보증금 빠르게 조회
 # -- 정산 시 반환되지 않은 보증금을 찾을 필요 있음.
 CREATE INDEX idx_refund ON Deposits(user_id, is_refunded);
 #
-=======
-# CREATE INDEX idx_dailycerts ON DailyCerts(user_id, cert_date);
-
-#
-# # 02. 반환되지 않은 보증금 빠르게 조회
-# -- 정산 시 반환되지 않은 보증금을 찾을 필요 있음.
-# CREATE INDEX idx_refund ON Deposits(user_id, is_refunded);
-
->>>>>>> 0a5ee084811ba735356ce4d709cb9f835faaebff
 # # 03. 스터디와 유저에 따른 보증금 빠르게 조회
 CREATE INDEX idx_refundid ON Deposits(user_id, study_id);
 #
