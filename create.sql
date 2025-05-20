@@ -161,4 +161,57 @@ WHERE
     dc.is_approved = FALSE
 ;
 
+# # 03. 스터디와 유저에 따른 보증금 빠르게 조회
+# CREATE INDEX idx_refundid ON Deposits(user_id, study_id);
+#
+# # 04. 스터디그룹의 운영상태에 따라 운영중인 스터디그룹을 빠르게 확인할 수 있도록
+# -- 그러나 현재 status 컬럼이 없어서 ALTER로 추가해봤습니다
+# ALTER TABLE StudyGroups ADD COLUMN status ENUM('모집중', '진행중', '종료') DEFAULT '모집중';
+#
+# -- 인덱스 추가
+# CREATE INDEX idx_status ON StudyGroups(status);
+# --status 컬럼 컨펌나면 SET GLOBAL event_scheduler = ON;을 추가해서 자동으로 현재날짜에 따라 스터디 상태를 바꿀 수 있도록 하는 것도 좋을것같습니다
+#
+# # 05. 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
+# CREATE INDEX idx_study_name ON StudyGroup(name);
+
+/* 아래로 뷰 정의 */
+
+# 01. MyStudy 페이지에서 한 스터디의 통계와 스터디 정보를 모두 확인할 수 있도록하는 뷰
+# --한 뷰에 담기에 넣기로 한 내용이 다소 많아서, rules 테이블의 내용은 따로 가져오게 처리하는 것을 제안
+# --스터디통계와 스터디 내 사람들의 누적벌금, 스터디 총벌금을 보는 뷰를 만듦
+# CREATE VIEW StudyMember_Summary AS
+SELECT 
+    sg.study_id,
+    sg.name AS study_name,
+    COUNT(gm.user_id) AS member_count,
+    IFNULL(SUM(gm.accumulated_fine), 0) AS total_fine,
+    GROUP_CONCAT(DISTINCT u.user_name ORDER BY u.user_name SEPARATOR ', ') AS member_names,
+    gm.user_id,
+    u.user_name,
+    gm.accumulated_fine
+FROM StudyGroups sg
+LEFT JOIN GroupMembers gm ON sg.study_id = gm.study_id AND gm.status = 'active'
+LEFT JOIN Users u ON gm.user_id = u.user_id
+GROUP BY sg.study_id, gm.user_id;
+
+# 02. 스터디장의 마이스터디 페이지에서 다른 스터디원들의 인증내역(중 아직 승인되지 않은것)을 확인하는 뷰
+# CREATE VIEW PendingCertifications AS
+SELECT
+    sg.study_id,
+    sg.name AS study_name,
+    sg.leader_id,
+    u.user_id,
+    u.user_name,
+    dc.cert_id,
+    dc.cert_date,
+    dc.content,
+    dc.is_approved
+FROM DailyCerts dc
+JOIN Users u ON dc.user_id = u.user_id
+JOIN StudyGroups sg ON dc.study_id = sg.study_id
+WHERE
+    dc.is_approved = FALSE
+;
+
 select * from users;
