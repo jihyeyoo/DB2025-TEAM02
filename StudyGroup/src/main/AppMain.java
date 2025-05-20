@@ -11,7 +11,7 @@ public class AppMain {
         String DRIVER = "com.mysql.cj.jdbc.Driver";
         String DBURL = "jdbc:mysql://localhost:3306/db2025team02";
         String DBID = "root"; //본인 sql user 이름 입력하세요
-        String DBPW = "wkd110614!"; //본인 sql pw 입력하세요
+        String DBPW = ""; //본인 sql pw 입력하세요
 
         try {
             Class.forName(DRIVER);

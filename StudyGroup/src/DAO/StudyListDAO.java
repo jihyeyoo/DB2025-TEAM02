@@ -33,4 +33,33 @@ public class StudyListDAO {
 
         return list;
     }
+    
+    public List<StudyListDTO> searchStudiesByName(String keyword) {
+        List<StudyListDTO> list = new ArrayList<>();
+        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit " +
+                     "FROM StudyGroups WHERE name LIKE ? ORDER BY name ASC";
+
+        try (PreparedStatement ps = AppMain.conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            ps.setString(1, "%" + keyword + "%");
+          
+            while (rs.next()) {
+                StudyListDTO dto = new StudyListDTO(
+                    rs.getInt("study_id"),
+                    rs.getString("name"),
+                    rs.getString("start_date"),
+                    rs.getString("end_date"),
+                    rs.getString("cert_method"),
+                    rs.getInt("deposit")
+                );
+                list.add(dto);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
