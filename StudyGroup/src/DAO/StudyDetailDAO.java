@@ -1,18 +1,19 @@
 package DAO;
 
 import DTO.StudyDetailDTO;
-import java.sql.*;
+import main.AppMain;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class StudyDetailDAO {
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/DB2025Team02";
-    private static final String DB_USER = "DB2025Team02";
-    private static final String DB_PASS = "DB2025Team02";
 
-    public StudyDetailDTO getStudyDetail(int studyId) {
+    public StudyDetailDTO getStudyDetailById(int studyId) {
         String sql = "SELECT name, description, start_date, end_date, cert_method, deposit FROM StudyGroups WHERE study_id = ?";
-        try (Connection conn = DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASS);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try {
+            Connection conn = AppMain.conn;
+            PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, studyId);
             ResultSet rs = ps.executeQuery();
 
@@ -26,9 +27,11 @@ public class StudyDetailDAO {
                     rs.getInt("deposit")
                 );
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+
+        return null; // 찾지 못한 경우
     }
 }
