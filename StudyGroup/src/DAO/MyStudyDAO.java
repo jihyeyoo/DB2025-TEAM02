@@ -10,11 +10,11 @@ import java.util.List;
 
 public class MyStudyDAO {
 
-    public boolean createStudyGroup(String name, int leaderId, String description, 
+    public boolean createStudyGroup(String name, int leaderId, String description,
                                     Date startDate, Date endDate, String certMethod, int deposit) {
 
         String insertGroupSQL = "INSERT INTO StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertLeaderSQL = "INSERT INTO GroupMembers (study_id, user_id, status) VALUES (?, ?, 'active')";
 
         try (PreparedStatement groupStmt = AppMain.conn.prepareStatement(insertGroupSQL, Statement.RETURN_GENERATED_KEYS)) {
@@ -52,24 +52,32 @@ public class MyStudyDAO {
     public List<MyStudyDTO> getMyStudies(UserDTO user) {
         List<MyStudyDTO> studyList = new ArrayList<>();
 
-        // ✅ leader_id SELECT에 추가
-        String sql = "SELECT sg.study_id, sg.name AS study_name, u.user_name AS leader_name, sg.start_date, sg.leader_id " +
-                     "FROM GroupMembers gm " +
-                     "JOIN StudyGroups sg ON gm.study_id = sg.study_id " +
-                     "JOIN Users u ON sg.leader_id = u.user_id " +
-                     "WHERE gm.user_id = ?";
+        String sql = "SELECT sg.study_id, sg.name AS study_name, u.user_name AS leader_name, " +
+                "sg.start_date, sg.status, sg.leader_id " +
+                "FROM GroupMembers gm " +
+                "JOIN StudyGroups sg ON gm.study_id = sg.study_id " +
+                "JOIN Users u ON sg.leader_id = u.user_id " +
+                "WHERE gm.user_id = ? " +
+                "ORDER BY " +
+                "  CASE sg.status " +
+                "    WHEN '진행중' THEN 0 " +
+                "    WHEN '모집중' THEN 1 " +
+                "    WHEN '종료' THEN 2 " +
+                "    ELSE 3 " +
+                "  END, " +
+                "  sg.start_date DESC";
 
         try (PreparedStatement pstmt = AppMain.conn.prepareStatement(sql)) {
             pstmt.setInt(1, user.getUserId());
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                // ✅ leader_id 생성자에 전달
                 MyStudyDTO dto = new MyStudyDTO(
                         rs.getInt("study_id"),
                         rs.getString("study_name"),
                         rs.getString("leader_name"),
                         rs.getDate("start_date"),
-                        rs.getInt("leader_id")
+                        rs.getInt("leader_id"),
+                        rs.getString("status")
                 );
                 studyList.add(dto);
             }
