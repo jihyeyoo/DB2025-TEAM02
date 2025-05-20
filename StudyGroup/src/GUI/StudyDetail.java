@@ -1,24 +1,32 @@
 package GUI;
-
 import DAO.StudyDetailDAO;
 import DTO.StudyDetailDTO;
-
+import DTO.UserDTO;
 import javax.swing.*;
 import java.awt.*;
 
+
+/*
+
+WHAT: 스터디목록에서 선택한 스터디의 세부 정보를 띄워주는 페이지 GUI
+WHO: 담당자 - 공세영
+TODO: 
+
+*/
+
+
 public class StudyDetail extends JFrame {
-
-    public StudyDetail(int studyId) {
+	// studyId를 이용해 선택한 스터디 정보를 DB로부터 뿌려줄 수 있게 함.
+    public StudyDetail(int studyId, UserDTO user) {
         setTitle("스터디 상세 정보");
-        setSize(700, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(1000, 700);								
         setLocationRelativeTo(null);
-        getContentPane().setLayout(null);
-        getContentPane().setBackground(Color.WHITE);
+        getContentPane().setLayout(null);					
 
-        JLabel title = new JLabel("스터디 상세 정보");
-        title.setFont(new Font("맑은 고딕", Font.BOLD, 24));
-        title.setBounds(230, 30, 300, 40);
+        JLabel title = new JLabel("스터디 상세 정보", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 22));
+        title.setBounds(400, 30, 200, 40);					
         add(title);
 
         StudyDetailDAO dao = new StudyDetailDAO();
@@ -27,13 +35,11 @@ public class StudyDetail extends JFrame {
         if (dto == null) {
             JOptionPane.showMessageDialog(this, "해당 스터디 정보를 불러올 수 없습니다.");
             dispose();
-            new StudyList();
+            new StudyList(null);
             return;
         }
 
-        int y = 100, spacing = 60;
-        Font labelFont = new Font("맑은 고딕", Font.BOLD, 16);
-        Font valueFont = new Font("맑은 고딕", Font.PLAIN, 15);
+        int y = 100, spacing = 70; 
 
         JLabel[] labels = {
             new JLabel("이름:"), new JLabel("소개:"), new JLabel("시작일:"),
@@ -46,27 +52,25 @@ public class StudyDetail extends JFrame {
         };
 
         for (int i = 0; i < labels.length; i++) {
-            labels[i].setFont(labelFont);
-            labels[i].setBounds(100, y, 150, 30);
+            labels[i].setBounds(220, y, 100, 30);				
             add(labels[i]);
 
             JTextArea value = new JTextArea(values[i]);
-            value.setFont(valueFont);
             value.setEditable(false);
             value.setLineWrap(true);
+
             JScrollPane scroll = new JScrollPane(value);
-            scroll.setBounds(250, y, 350, (i == 1) ? 80 : 30);
+            scroll.setBounds(340, y, 420, (i == 1) ? 80 : 30);	
             add(scroll);
 
             y += (i == 1) ? spacing + 30 : spacing;
         }
 
         JButton backBtn = new JButton("뒤로가기");
-        backBtn.setBounds(280, y + 30, 120, 40);
-        backBtn.setFont(labelFont);
+        backBtn.setBounds(440, y + 30, 120, 40);				
         backBtn.addActionListener(e -> {
             dispose();
-            new StudyList();
+            new StudyList(user);
         });
         add(backBtn);
 
