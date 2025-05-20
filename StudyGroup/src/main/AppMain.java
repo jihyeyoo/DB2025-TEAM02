@@ -1,8 +1,7 @@
 package main;
 
-import java.sql.*;
-
 import GUI.Login;
+import java.sql.*;
 
 public class AppMain {
     public static Connection conn;
