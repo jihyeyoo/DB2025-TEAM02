@@ -7,14 +7,12 @@ public class MyStudyDTO {
     private String studyName;
     private String leaderName;
     private Date startDate;  // java.sql.Date로 변경
-    private String status;
 
-    public MyStudyDTO(int studyId, String studyName, String leaderName, Date startDate, String status) {
+    public MyStudyDTO(int studyId, String studyName, String leaderName, Date startDate) {
         this.studyId = studyId;
         this.studyName = studyName;
         this.leaderName = leaderName;
         this.startDate = startDate;
-        this.status = status;
     }
 
     public int getStudyId() { return studyId; }
