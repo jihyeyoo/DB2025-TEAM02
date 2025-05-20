@@ -2,6 +2,11 @@ package DAO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+
+import DTO.DepositsDTO;
 import main.AppMain;
 
 public class MyPageDAO {
@@ -20,4 +25,33 @@ public class MyPageDAO {
             return false;
         }
     }
+    
+    // 환급 정보 가져오는 메서드
+    public List<DepositsDTO> getRefundedDepositsByUser(int userId) {
+        String sql = "SELECT * FROM Deposits WHERE user_id = ? AND is_refunded = TRUE";
+        List<DepositsDTO> refundedDeposits = new ArrayList<>();
+
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    DepositsDTO deposit = new DepositsDTO(
+                        rs.getInt("deposit_id"),
+                        rs.getInt("user_id"),
+                        rs.getInt("study_id"),
+                        rs.getInt("amount"),
+                        rs.getDate("deposit_date"),
+                        rs.getBoolean("is_refunded")
+                    );
+                    refundedDeposits.add(deposit);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return refundedDeposits;
+    }
+
 }

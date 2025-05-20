@@ -1,36 +1,52 @@
 package DAO;
 
 import DTO.CreateStudyDTO;
+import main.AppMain;
+
 import java.sql.*;
 
 /**
  * StudyGroups 테이블에 스터디를 삽입하는 DAO 클래스
  */
 public class CreateStudyDAO {
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/DB2025Team02";
-    private static final String DB_USER = "DB2025Team02";
-    private static final String DB_PASS = "DB2025Team02";
 
-    public boolean insertStudy(CreateStudyDTO dto) {
-        String sql = "INSERT INTO StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public boolean createStudyGroup(CreateStudyDTO dto) {
+        String insertGroupSQL = "INSERT INTO StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertLeaderSQL = "INSERT INTO GroupMembers (study_id, user_id, status) VALUES (?, ?, 'active')";
 
-        try (Connection conn = DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASS);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement groupStmt = AppMain.conn.prepareStatement(insertGroupSQL, Statement.RETURN_GENERATED_KEYS)) {
+            // 1. StudyGroups 테이블에 스터디 추가
+            groupStmt.setString(1, dto.getName());
+            groupStmt.setInt(2, dto.getLeaderId());
+            groupStmt.setString(3, dto.getDescription());
+            groupStmt.setDate(4, Date.valueOf(dto.getStartDate()));  // String → Date 변환
+            groupStmt.setDate(5, Date.valueOf(dto.getEndDate()));
+            groupStmt.setString(6, dto.getCertMethod());
+            groupStmt.setInt(7, dto.getDeposit());
 
-            ps.setString(1, dto.getName());
-            ps.setInt(2, dto.getLeaderId());
-            ps.setString(3, dto.getDescription());
-            ps.setString(4, dto.getStartDate());
-            ps.setString(5, dto.getEndDate());
-            ps.setString(6, dto.getCertMethod());
-            ps.setInt(7, dto.getDeposit());
+            int rows = groupStmt.executeUpdate();
 
-            return ps.executeUpdate() > 0;
+            if (rows > 0) {
+                // 2. 생성된 study_id 가져오기
+                try (ResultSet rs = groupStmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int studyId = rs.getInt(1);
 
+                        // 3. 리더를 GroupMembers에 자동 등록
+                        try (PreparedStatement leaderStmt = AppMain.conn.prepareStatement(insertLeaderSQL)) {
+                            leaderStmt.setInt(1, studyId);
+                            leaderStmt.setInt(2, dto.getLeaderId());
+                            int memberRows = leaderStmt.executeUpdate();
+
+                            return memberRows > 0;
+                        }
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 }

@@ -101,7 +101,7 @@ public class CreateStudy extends JFrame {
                 }
 
                 CreateStudyDTO dto = new CreateStudyDTO(name, 1, desc, start, end, cert, deposit);  // leader_id = 1
-                boolean success = new CreateStudyDAO().insertStudy(dto);
+                boolean success = new CreateStudyDAO().createStudyGroup(dto);
 
                 if (success) {
                     JOptionPane.showMessageDialog(this, "스터디 개설 성공!");
