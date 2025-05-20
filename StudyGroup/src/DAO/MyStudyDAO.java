@@ -18,7 +18,6 @@ public class MyStudyDAO {
         String insertLeaderSQL = "INSERT INTO GroupMembers (study_id, user_id, status) VALUES (?, ?, 'active')";
 
         try (PreparedStatement groupStmt = AppMain.conn.prepareStatement(insertGroupSQL, Statement.RETURN_GENERATED_KEYS)) {
-            // 1. StudyGroups 테이블에 스터디 추가
             groupStmt.setString(1, name);
             groupStmt.setInt(2, leaderId);
             groupStmt.setString(3, description);
@@ -30,12 +29,10 @@ public class MyStudyDAO {
             int rows = groupStmt.executeUpdate();
 
             if (rows > 0) {
-                // 2. 생성된 study_id 가져오기
                 try (ResultSet rs = groupStmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         int studyId = rs.getInt(1);
 
-                        // 3. 리더를 GroupMembers에 자동 등록
                         try (PreparedStatement leaderStmt = AppMain.conn.prepareStatement(insertLeaderSQL)) {
                             leaderStmt.setInt(1, studyId);
                             leaderStmt.setInt(2, leaderId);
@@ -51,24 +48,28 @@ public class MyStudyDAO {
         }
         return false;
     }
-    
+
     public List<MyStudyDTO> getMyStudies(UserDTO user) {
         List<MyStudyDTO> studyList = new ArrayList<>();
-        String sql = "SELECT sg.study_id, sg.name AS study_name, u.user_name AS leader_name, sg.start_date " +
+
+        // ✅ leader_id SELECT에 추가
+        String sql = "SELECT sg.study_id, sg.name AS study_name, u.user_name AS leader_name, sg.start_date, sg.leader_id " +
                      "FROM GroupMembers gm " +
                      "JOIN StudyGroups sg ON gm.study_id = sg.study_id " +
                      "JOIN Users u ON sg.leader_id = u.user_id " +
                      "WHERE gm.user_id = ?";
 
         try (PreparedStatement pstmt = AppMain.conn.prepareStatement(sql)) {
-            pstmt.setInt(1, user.getUserId());  // userId 바로 사용
+            pstmt.setInt(1, user.getUserId());
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                // ✅ leader_id 생성자에 전달
                 MyStudyDTO dto = new MyStudyDTO(
                         rs.getInt("study_id"),
                         rs.getString("study_name"),
                         rs.getString("leader_name"),
-                        rs.getDate("start_date")
+                        rs.getDate("start_date"),
+                        rs.getInt("leader_id")
                 );
                 studyList.add(dto);
             }
@@ -83,7 +84,7 @@ public class MyStudyDAO {
         String sql = "DELETE FROM GroupMembers WHERE study_id = ? AND user_id = ?";
         try (PreparedStatement pstmt = AppMain.conn.prepareStatement(sql)) {
             pstmt.setInt(1, studyId);
-            pstmt.setInt(2, user.getUserId());  // userId 바로 사용
+            pstmt.setInt(2, user.getUserId());
             int affected = pstmt.executeUpdate();
             return affected > 0;
         } catch (SQLException e) {

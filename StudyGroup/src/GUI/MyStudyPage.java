@@ -1,6 +1,8 @@
 package GUI;
 
 import DAO.MyStudyDAO;
+import DAO.StudyEditDAO;
+import DTO.StudyEditDTO;
 import DTO.MyStudyDTO;
 import DTO.UserDTO;
 
@@ -19,8 +21,8 @@ public class MyStudyPage extends JFrame {
 
         List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
 
-        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "탈퇴"};
-        Object[][] data = new Object[studyList.size()][5];
+        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴"};
+        Object[][] data = new Object[studyList.size()][6];
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
@@ -28,8 +30,10 @@ public class MyStudyPage extends JFrame {
             data[i][1] = dto.getLeaderName();
             data[i][2] = dto.getStartDate();
             data[i][3] = "정보 보기";
-            data[i][4] = "탈퇴";
+            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";  // 개설자인 경우만 "수정"
+            data[i][5] = "탈퇴";
         }
+
 
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
             public boolean isCellEditable(int row, int column) {
@@ -43,6 +47,9 @@ public class MyStudyPage extends JFrame {
         table.getColumn("정보").setCellEditor(new InfoButtonEditor(new JCheckBox(), studyList, user));
         table.getColumn("탈퇴").setCellRenderer(new WithdrawButtonRenderer());
         table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, user));
+        table.getColumn("수정").setCellRenderer(new EditButtonRenderer());
+        table.getColumn("수정").setCellEditor(new EditButtonEditor(new JCheckBox(), studyList, user));
+
 
         add(new JScrollPane(table));
         setVisible(true);
@@ -167,5 +174,59 @@ public class MyStudyPage extends JFrame {
             return super.stopCellEditing();
         }
     }
+    
+    class EditButtonRenderer extends JButton implements TableCellRenderer {
+        public EditButtonRenderer() {
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value != null ? value.toString() : "");
+            return this;
+        }
+    }
+    
+    class EditButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private boolean clicked;
+        private List<MyStudyDTO> list;
+        private int currentRow;
+        private UserDTO user;
+
+        public EditButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, UserDTO user) {
+            super(checkBox);
+            this.list = list;
+            this.user = user;
+            button = new JButton("수정");
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            currentRow = row;
+            clicked = true;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            if (clicked) {
+                MyStudyDTO selected = list.get(currentRow);
+                if (selected.getLeaderId() == user.getUserId()) {
+                    // 스터디 ID로 상세 정보 조회 후 수정 페이지로
+                    StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());
+                    new EditStudyPage(dto);
+                }
+            }
+            clicked = false;
+            return "수정";
+        }
+
+        public boolean stopCellEditing() {
+            clicked = false;
+            return super.stopCellEditing();
+        }
+    }
+
 }
 
