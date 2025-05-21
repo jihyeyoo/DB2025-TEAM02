@@ -15,14 +15,14 @@ public class MyStudyPage extends JFrame {
 
     public MyStudyPage(UserDTO user) {
         setTitle("자기 스터디 조회 페이지");
-        setSize(900, 300);
+        setSize(1000, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
 
-        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴"};
-        Object[][] data = new Object[studyList.size()][6];
+        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴", "인증 관리"};
+        Object[][] data = new Object[studyList.size()][7];
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
@@ -30,14 +30,14 @@ public class MyStudyPage extends JFrame {
             data[i][1] = dto.getLeaderName();
             data[i][2] = dto.getStartDate();
             data[i][3] = "정보 보기";
-            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";  // 개설자인 경우만 "수정"
+            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";
             data[i][5] = "탈퇴";
+            data[i][6] = (dto.getLeaderId() == user.getUserId()) ? "인증 관리" : "";
         }
-
 
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
             public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 4;
+                return column == 3 || column == 4 || column == 6;
             }
         };
 
@@ -49,10 +49,58 @@ public class MyStudyPage extends JFrame {
         table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, user));
         table.getColumn("수정").setCellRenderer(new EditButtonRenderer());
         table.getColumn("수정").setCellEditor(new EditButtonEditor(new JCheckBox(), studyList, user));
-
+        table.getColumn("인증 관리").setCellRenderer(new CertManageButtonRenderer());
+        table.getColumn("인증 관리").setCellEditor(new CertManageButtonEditor(new JCheckBox(), studyList));
 
         add(new JScrollPane(table));
         setVisible(true);
+    }
+
+    class CertManageButtonRenderer extends JButton implements TableCellRenderer {
+        public CertManageButtonRenderer() {
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value != null ? value.toString() : "");
+            return this;
+        }
+    }
+
+    class CertManageButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private boolean clicked;
+        private List<MyStudyDTO> list;
+        private int currentRow;
+
+        public CertManageButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list) {
+            super(checkBox);
+            this.list = list;
+            button = new JButton("인증 관리");
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            currentRow = row;
+            clicked = true;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            if (clicked) {
+                MyStudyDTO selected = list.get(currentRow);
+                new ManageCertsPage(selected.getStudyId());
+            }
+            clicked = false;
+            return "인증 관리";
+        }
+
+        public boolean stopCellEditing() {
+            clicked = false;
+            return super.stopCellEditing();
+        }
     }
 
     // 정보 버튼 렌더러
@@ -109,7 +157,7 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
-                // ✅ UserDTO 함께 전달
+                // UserDTO 함께 전달
                 new MyStudyDetailPage(selected.getStudyId(), user);
             }
             clicked = false;
@@ -229,4 +277,3 @@ public class MyStudyPage extends JFrame {
     }
 
 }
-
