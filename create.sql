@@ -125,6 +125,16 @@ CREATE INDEX idx_status ON StudyGroups(status);
 # # 05. 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
 CREATE INDEX idx_study_name ON StudyGroups(name);
 
+# # 06. 시작일 인덱스를 만들어서 시작일로 정렬 가능
+CREATE INDEX idx_start_date ON StudyGroups(start_date);
+
+# # 07. 종료일 인덱스를 만들어서 종료일로 정렬 가능
+CREATE INDEX idx_end_date ON StudyGroups(end_date);
+
+# # 08. 보증금 인덱스를 만들어서 보증금으로 정렬 가능
+CREATE INDEX idx_deposit ON StudyGroups(deposit);
+
+
 /* 아래로 뷰 정의 */
 
 # 01. MyStudy 페이지에서 한 스터디의 통계와 스터디 정보를 모두 확인할 수 있도록하는 뷰

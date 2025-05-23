@@ -67,6 +67,35 @@ public class DailyCertsDAO{
 	        return false;
 	    }
 	}
+	
+	// 사용자 인증 기록만 조회
+	public List<DailyCertsDTO> getCertificationsForUser(int studyId, int userId) {
+	    String sql = "SELECT * FROM DailyCerts WHERE study_id = ? AND user_id = ? ORDER BY cert_date DESC";
+	    List<DailyCertsDTO> certs = new ArrayList<>();
+
+	    try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+	        stmt.setInt(1, studyId);
+	        stmt.setInt(2, userId);
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            while (rs.next()) {
+	                DailyCertsDTO cert = new DailyCertsDTO(
+	                    rs.getInt("cert_id"),
+	                    rs.getInt("user_id"),
+	                    rs.getInt("study_id"),
+	                    rs.getDate("cert_date"),
+	                    rs.getString("content"),
+	                    rs.getBoolean("is_approved")
+	                );
+	                certs.add(cert);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return certs;
+	}
+
 
 
 
