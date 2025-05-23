@@ -19,6 +19,7 @@ public class MyPage extends JFrame {
         setTitle("마이페이지");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
         setLayout(null);
 
         JLabel welcomeLabel = new JLabel("마이페이지");
