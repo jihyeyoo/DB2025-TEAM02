@@ -16,6 +16,8 @@ public class ManageCertsPage extends JFrame {
     private DefaultTableModel model;
     private JTable table;
     private int studyId;
+    private JRadioButton pendingRadio;
+    private JRadioButton approvedRadio;
 
     public ManageCertsPage(int studyId) {
         this.studyId = studyId;
@@ -36,7 +38,29 @@ public class ManageCertsPage extends JFrame {
         table.getColumn("반려").setCellRenderer(new ButtonRenderer("반려"));
         table.getColumn("반려").setCellEditor(new ButtonEditor(new JCheckBox(), false));
 
-        loadTableData();
+        pendingRadio = new JRadioButton("미승인 인증 보기", true);
+        approvedRadio = new JRadioButton("승인된 인증 보기");
+        
+        ButtonGroup group = new ButtonGroup();
+        group.add(pendingRadio);
+        group.add(approvedRadio);
+
+        ActionListener filterListener = e -> {
+            if (pendingRadio.isSelected()) {
+                loadTableData(false);
+            } else {
+                loadTableData(true);
+            }
+        };
+        
+        pendingRadio.addActionListener(filterListener);
+        approvedRadio.addActionListener(filterListener);
+
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.add(pendingRadio);
+        topPanel.add(approvedRadio);
+        
+        loadTableData(false);
 
         JButton backButton = new JButton("뒤로가기");
         backButton.addActionListener(e -> dispose());
@@ -49,9 +73,9 @@ public class ManageCertsPage extends JFrame {
         setVisible(true);
     }
 
-    private void loadTableData() {
+    private void loadTableData(boolean isApproved) {
         model.setRowCount(0);
-        List<DailyCertsDTO> list = dao.getPendingCertsForStudy(studyId);
+        List<DailyCertsDTO> list = dao.getCertsByApprovalStatus(studyId, isApproved);
         for (DailyCertsDTO cert : list) {
             model.addRow(new Object[]{
                     cert.getCertId(),
@@ -105,7 +129,8 @@ public class ManageCertsPage extends JFrame {
                     boolean result = dao.updateCertificationStatus(certId, approve);
                     if (result) {
                         JOptionPane.showMessageDialog(button, "처리가 완료되었습니다.");
-                        loadTableData();
+                        
+                        loadTableData(pendingRadio.isSelected() ? false : true);
                     } else {
                         JOptionPane.showMessageDialog(button, "처리에 실패했습니다.");
                     }

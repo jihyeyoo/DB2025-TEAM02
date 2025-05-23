@@ -47,7 +47,7 @@ public class MyStudyPage extends JFrame {
         	    }
         	    if (column == 3) return true; // 정보 보기 버튼
                 if (column == 5) return true; // ✅ 탈퇴 버튼도 모두 클릭 가능하게 추가
-
+                if (column == 6) return true; // 인증 관리 버튼
                 return false;
 
 
