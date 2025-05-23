@@ -23,4 +23,27 @@ public class DepositsDTO {
     }
 
     // Getter/Setter 추가 (필요 시)
+    public int getDepositId() {
+        return depositId;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public int getStudyId() {
+        return studyId;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public Date getDepositDate() {
+        return depositDate;
+    }
+
+    public boolean isRefunded() {
+        return isRefunded;
+    }
 }

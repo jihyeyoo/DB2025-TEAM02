@@ -12,17 +12,19 @@ import java.awt.*;
 import java.util.List;
 
 public class MyStudyPage extends JFrame {
+    private JFrame previousPage;
 
-    public MyStudyPage(UserDTO user) {
+    public MyStudyPage(UserDTO user, JFrame previousPage) {
+        this.previousPage = previousPage;
         setTitle("자기 스터디 조회 페이지");
-        setSize(900, 300);
+        setSize(1000, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
 
-        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴"};
-        Object[][] data = new Object[studyList.size()][6];
+        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴", "인증 관리"};
+        Object[][] data = new Object[studyList.size()][7];
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
@@ -32,13 +34,25 @@ public class MyStudyPage extends JFrame {
             data[i][3] = "정보 보기";
             data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";  // 개설자인 경우만 "수정"
             data[i][5] = "탈퇴";
+            data[i][6] = (dto.getLeaderId() == user.getUserId()) ? "인증 관리" : "";
         }
 
 
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
-            public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 4;
-            }
+        	public boolean isCellEditable(int row, int column) {
+
+        	    if (column == 4) {  // 수정 버튼 컬럼일 때만 특별히 검사
+        	        MyStudyDTO dto = studyList.get(row);
+        	        return dto.getLeaderId() == user.getUserId();  // 개설자인 경우만 편집 가능 (즉, 수정 버튼만 동작)
+        	    }
+        	    if (column == 3) return true; // 정보 보기 버튼
+                if (column == 5) return true; // ✅ 탈퇴 버튼도 모두 클릭 가능하게 추가
+
+                return false;
+
+
+        	}
+
         };
 
         JTable table = new JTable(model);
@@ -49,10 +63,74 @@ public class MyStudyPage extends JFrame {
         table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, user));
         table.getColumn("수정").setCellRenderer(new EditButtonRenderer());
         table.getColumn("수정").setCellEditor(new EditButtonEditor(new JCheckBox(), studyList, user));
+        table.getColumn("인증 관리").setCellRenderer(new CertManageButtonRenderer());
+        table.getColumn("인증 관리").setCellEditor(new CertManageButtonEditor(new JCheckBox(), studyList));
 
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
-        add(new JScrollPane(table));
+        // ✅ 아래 부분만 추가/수정됨 (기본 텍스트 뒤로 가기 버튼)
+        JPanel bottomPanel = new JPanel();
+        JButton backButton = new JButton("← 뒤로 가기");
+        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        backButton.setFocusPainted(false);
+        backButton.setBackground(Color.LIGHT_GRAY);
+        backButton.setForeground(Color.BLACK);
+
+        bottomPanel.add(backButton);
+        add(bottomPanel, BorderLayout.SOUTH);
         setVisible(true);
+
+        backButton.addActionListener(e -> {
+            dispose(); //현재 창 닫기
+            previousPage.setVisible(true); // MyPage 다시 보이기
+        });
+    }
+
+    class CertManageButtonRenderer extends JButton implements TableCellRenderer {
+        public CertManageButtonRenderer() {
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value != null ? value.toString() : "");
+            return this;
+        }
+    }
+
+    class CertManageButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private boolean clicked;
+        private List<MyStudyDTO> list;
+        private int currentRow;
+
+        public CertManageButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list) {
+            super(checkBox);
+            this.list = list;
+            button = new JButton("인증 관리");
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            currentRow = row;
+            clicked = true;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            if (clicked) {
+                MyStudyDTO selected = list.get(currentRow);
+                new ManageCertsPage(selected.getStudyId());
+            }
+            clicked = false;
+            return "인증 관리";
+        }
+
+        public boolean stopCellEditing() {
+            clicked = false;
+            return super.stopCellEditing();
+        }
     }
 
     // 정보 버튼 렌더러
@@ -89,7 +167,7 @@ public class MyStudyPage extends JFrame {
         private boolean clicked;
         private List<MyStudyDTO> list;
         private int currentRow;
-        private UserDTO user;  // ✅ UserDTO 추가
+        private UserDTO user;
 
         public InfoButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, UserDTO user) {
             super(checkBox);
@@ -109,8 +187,9 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
-                // ✅ UserDTO 함께 전달
-                new MyStudyDetailPage(selected.getStudyId(), user);
+                JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button); // 현재 창 참조
+                currentFrame.dispose(); // 현재 MyStudyPage 창 닫기
+                new MyStudyDetailPage(selected.getStudyId(), user, currentFrame); // 이전 창도 넘기기
             }
             clicked = false;
             return "정보 보기";
@@ -122,8 +201,6 @@ public class MyStudyPage extends JFrame {
         }
     }
 
-
-    // 탈퇴 버튼 클릭 이벤트
     class WithdrawButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
@@ -158,8 +235,10 @@ public class MyStudyPage extends JFrame {
                     boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), user);
                     if (result) {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다.");
-                        dispose();
-                        new MyStudyPage(user); // 새로고침
+                        // ✅ 정확한 현재 프레임 닫고 새로 띄우기
+                        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
+                        currentFrame.dispose();
+                        new MyStudyPage(user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
                     }
@@ -168,6 +247,7 @@ public class MyStudyPage extends JFrame {
             clicked = false;
             return "탈퇴";
         }
+
 
         public boolean stopCellEditing() {
             clicked = false;
@@ -212,10 +292,11 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
+                System.out.println("selected study id" + selected.getStudyId());
                 if (selected.getLeaderId() == user.getUserId()) {
-                    // 스터디 ID로 상세 정보 조회 후 수정 페이지로
-                    StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());
-                    new EditStudyPage(dto);
+                    StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());  // 여기에서 studyId 가져오기
+                    JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);     // 이전 창 전달
+                    new EditStudyPage(dto, user, currentFrame);  // user, 이전 페이지 넘기기
                 }
             }
             clicked = false;

@@ -100,4 +100,19 @@ public class MyStudyDAO {
             return false;
         }
     }
+    
+    public int getStudyCountByUser(int userId) {
+        String sql = "SELECT COUNT(*) FROM GroupMembers WHERE user_id = ?";
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

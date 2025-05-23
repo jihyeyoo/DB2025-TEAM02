@@ -15,6 +15,7 @@ public class Login extends JFrame {
         setTitle("로그인");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
         setLayout(null);
 
         JLabel idLabel = new JLabel("아이디:");
@@ -59,7 +60,7 @@ public class Login extends JFrame {
                         UserDTO user = result.getUser();  // UserDTO 얻기
                         JOptionPane.showMessageDialog(null, user.getUserName() + "님, 환영합니다!");
                         dispose();  // 로그인 창 닫기
-                        new MyPage(user);  // DTO 전달
+                        new StudyList(user);  // DTO 전달
                     } else if (result.getStatus() == LoginStatus.INVALID_PASSWORD) {
                         JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다.");
                     } else if (result.getStatus() == LoginStatus.ID_NOT_FOUND) {
