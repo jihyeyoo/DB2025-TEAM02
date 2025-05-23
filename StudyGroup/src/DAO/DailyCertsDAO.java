@@ -67,7 +67,7 @@ public class DailyCertsDAO{
 	        return false;
 	    }
 	}
-	
+
 	// 사용자 인증 기록만 조회
 	public List<DailyCertsDTO> getCertificationsForUser(int studyId, int userId) {
 	    String sql = "SELECT * FROM DailyCerts WHERE study_id = ? AND user_id = ? ORDER BY cert_date DESC";
@@ -95,8 +95,5 @@ public class DailyCertsDAO{
 	    }
 	    return certs;
 	}
-
-
-
 
 }

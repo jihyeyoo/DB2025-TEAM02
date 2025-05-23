@@ -17,14 +17,14 @@ public class MyStudyPage extends JFrame {
     public MyStudyPage(UserDTO user, JFrame previousPage) {
         this.previousPage = previousPage;
         setTitle("자기 스터디 조회 페이지");
-        setSize(900, 300);
+        setSize(1000, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
 
-        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴"};
-        Object[][] data = new Object[studyList.size()][6];
+        String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴", "인증 관리"};
+        Object[][] data = new Object[studyList.size()][7];
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
@@ -32,13 +32,15 @@ public class MyStudyPage extends JFrame {
             data[i][1] = dto.getLeaderName();
             data[i][2] = dto.getStartDate();
             data[i][3] = "정보 보기";
-            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";
+            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";  // 개설자인 경우만 "수정"
             data[i][5] = "탈퇴";
+            data[i][6] = (dto.getLeaderId() == user.getUserId()) ? "인증 관리" : "";
         }
+
 
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
         	public boolean isCellEditable(int row, int column) {
-        		
+
         	    if (column == 4) {  // 수정 버튼 컬럼일 때만 특별히 검사
         	        MyStudyDTO dto = studyList.get(row);
         	        return dto.getLeaderId() == user.getUserId();  // 개설자인 경우만 편집 가능 (즉, 수정 버튼만 동작)
@@ -47,8 +49,8 @@ public class MyStudyPage extends JFrame {
                 if (column == 5) return true; // ✅ 탈퇴 버튼도 모두 클릭 가능하게 추가
 
                 return false;
-        	   
-        	    
+
+
         	}
 
         };
@@ -61,6 +63,8 @@ public class MyStudyPage extends JFrame {
         table.getColumn("탈퇴").setCellEditor(new WithdrawButtonEditor(new JCheckBox(), studyList, user));
         table.getColumn("수정").setCellRenderer(new EditButtonRenderer());
         table.getColumn("수정").setCellEditor(new EditButtonEditor(new JCheckBox(), studyList, user));
+        table.getColumn("인증 관리").setCellRenderer(new CertManageButtonRenderer());
+        table.getColumn("인증 관리").setCellEditor(new CertManageButtonEditor(new JCheckBox(), studyList));
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -75,13 +79,61 @@ public class MyStudyPage extends JFrame {
         bottomPanel.add(backButton);
         add(bottomPanel, BorderLayout.SOUTH);
         setVisible(true);
-        
+
         backButton.addActionListener(e -> {
             dispose(); //현재 창 닫기
             previousPage.setVisible(true); // MyPage 다시 보이기
         });
     }
 
+    class CertManageButtonRenderer extends JButton implements TableCellRenderer {
+        public CertManageButtonRenderer() {
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value != null ? value.toString() : "");
+            return this;
+        }
+    }
+
+    class CertManageButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private boolean clicked;
+        private List<MyStudyDTO> list;
+        private int currentRow;
+
+        public CertManageButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list) {
+            super(checkBox);
+            this.list = list;
+            button = new JButton("인증 관리");
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            currentRow = row;
+            clicked = true;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            if (clicked) {
+                MyStudyDTO selected = list.get(currentRow);
+                new ManageCertsPage(selected.getStudyId());
+            }
+            clicked = false;
+            return "인증 관리";
+        }
+
+        public boolean stopCellEditing() {
+            clicked = false;
+            return super.stopCellEditing();
+        }
+    }
+
+    // 정보 버튼 렌더러
     class InfoButtonRenderer extends JButton implements TableCellRenderer {
         public InfoButtonRenderer() {
             setOpaque(true);
@@ -94,6 +146,7 @@ public class MyStudyPage extends JFrame {
         }
     }
 
+    // 탈퇴 버튼 렌더러
     class WithdrawButtonRenderer extends JButton implements TableCellRenderer {
         public WithdrawButtonRenderer() {
             setOpaque(true);
@@ -108,6 +161,7 @@ public class MyStudyPage extends JFrame {
         }
     }
 
+    // 정보 보기 버튼 클릭 이벤트
     class InfoButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
@@ -140,7 +194,6 @@ public class MyStudyPage extends JFrame {
             clicked = false;
             return "정보 보기";
         }
-
 
         public boolean stopCellEditing() {
             clicked = false;
@@ -201,7 +254,7 @@ public class MyStudyPage extends JFrame {
             return super.stopCellEditing();
         }
     }
-
+    
     class EditButtonRenderer extends JButton implements TableCellRenderer {
         public EditButtonRenderer() {
             setOpaque(true);
@@ -213,7 +266,7 @@ public class MyStudyPage extends JFrame {
             return this;
         }
     }
-
+    
     class EditButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
@@ -257,3 +310,4 @@ public class MyStudyPage extends JFrame {
     }
 
 }
+
