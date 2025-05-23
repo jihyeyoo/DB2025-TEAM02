@@ -123,8 +123,4 @@ public class SubmitCert extends JFrame {
 
         setVisible(true);
     }
-
-    public static void main(String[] args) {
-        new SubmitCert(0, null); // 예시
-    }
 }

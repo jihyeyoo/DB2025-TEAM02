@@ -96,4 +96,47 @@ public class DailyCertsDAO{
 	    return certs;
 	}
 
+	public int getApprovedCertCount(int userId, int studyId) {
+		String sql = "SELECT COUNT(*) FROM DailyCerts WHERE user_id = ? AND study_id = ? AND is_approved = TRUE";
+
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			stmt.setInt(1, userId);
+			stmt.setInt(2, studyId);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt(1);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return 0;
+	}
+
+	public List<DailyCertsDTO> getPendingCertsForStudy(int studyId) {
+		String sql = "SELECT * FROM DailyCerts WHERE study_id = ? AND is_approved = FALSE";
+		List<DailyCertsDTO> certs = new ArrayList<>();
+
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			stmt.setInt(1, studyId);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					DailyCertsDTO cert = new DailyCertsDTO(
+							rs.getInt("cert_id"),
+							rs.getInt("user_id"),
+							rs.getInt("study_id"),
+							rs.getDate("cert_date"),
+							rs.getString("content"),
+							rs.getBoolean("is_approved")
+					);
+					certs.add(cert);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return certs;
+	}
+
 }

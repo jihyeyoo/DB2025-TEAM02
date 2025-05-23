@@ -91,20 +91,5 @@ public class ReviewCertHistory extends JFrame {
 
 
     // 테스트용 main()
-    public static void main(String[] args) {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            AppMain.conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/db2025team02",
-                "root",
-                "Skong302!"
-            );
-            System.out.println("✅ DB 연결 성공");
 
-            new ReviewCertHistory(1, 2);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
