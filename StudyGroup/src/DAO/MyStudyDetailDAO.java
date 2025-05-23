@@ -14,31 +14,36 @@ import main.AppMain;
 public class MyStudyDetailDAO {
 
     // 1. 스터디 통계 + 기본 정보 (스터디명, 스터디장, 인원수, 총벌금)
-	 public MyStudyDetailDTO getStudySummary(int studyId) {
-	        String sql = """
-	            SELECT study_id, study_name, member_count, total_fine
-	            FROM StudyMember_Summary
-	            WHERE study_id = ?
-	            LIMIT 1
-	        """;
-	        
-	        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-	            stmt.setInt(1, studyId);
-	            ResultSet rs = stmt.executeQuery();
-	            if (rs.next()) {
-	                return new MyStudyDetailDTO(
-	                    rs.getInt("study_id"),
-	                    rs.getString("study_name"),
-	                    rs.getInt("member_count"),
-	                    rs.getInt("total_fine"),
-	                    null // 최근 규칙 수정일은 Rules 테이블에서 별도 조회 필요
-	                );
-	            }
-	        } catch (Exception e) {
-	            e.printStackTrace();
+	public MyStudyDetailDTO getStudySummary(int studyId) {
+		String summarySql = """
+			    SELECT sg.study_id, sg.name,
+			           (SELECT COUNT(*) FROM GroupMembers gm WHERE gm.study_id = sg.study_id AND gm.status = 'active') AS member_count,
+			           (SELECT IFNULL(SUM(gm.accumulated_fine), 0) FROM GroupMembers gm WHERE gm.study_id = sg.study_id AND gm.status = 'active') AS total_fine,
+			           r.last_modified
+			    FROM StudyGroups sg
+			    LEFT JOIN Rules r ON sg.study_id = r.study_id
+			    WHERE sg.study_id = ?
+			""";
+
+	    try (PreparedStatement stmt = AppMain.conn.prepareStatement(summarySql)) {
+	        stmt.setInt(1, studyId);
+	        ResultSet rs = stmt.executeQuery();
+	        if (rs.next()) {
+	        	return new MyStudyDetailDTO(
+	        		    rs.getInt("study_id"),
+	        		    rs.getString("name"),
+	        		    rs.getInt("member_count"),
+	        		    rs.getInt("total_fine"),
+	        		    rs.getDate("last_modified")
+	        		);
+
 	        }
-	        return null;
+	    } catch (Exception e) {
+	        e.printStackTrace();
 	    }
+	    return null;
+	}
+
 
     // 2. 참여자별 정보 (이름, 누적벌금)
 	 public List<StudyMemberDTO> getMemberList(int studyId) {

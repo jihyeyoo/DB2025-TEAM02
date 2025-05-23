@@ -21,14 +21,10 @@ public class EditStudyPage extends JFrame {
     private JFrame previousPage;
 
     public EditStudyPage(StudyEditDTO study, UserDTO user, JFrame previousPage) {
-        this.study = (study != null) ? study : new StudyEditDTO();
+    	this.study = (study != null) ? study : new StudyEditDTO();  // ✅ 조건부 할당 1줄이면 충분
         this.user = user;
         this.previousPage = previousPage;
-        // study가 null일 경우 기본 객체 생성
-        if (study == null) {
-            study = new StudyEditDTO();
-        }
-        this.study = study;
+
 
         setTitle("스터디 정보 수정");
         setSize(500, 500);
@@ -111,6 +107,8 @@ public class EditStudyPage extends JFrame {
     private boolean updateStudyInfo() {
         try {
             // 값 세팅
+        	System.out.println("업데이트 대상 studyId: " + study.getStudyId());
+
             study.setName(nameField.getText().trim());
             study.setDescription(descriptionArea.getText().trim());
 

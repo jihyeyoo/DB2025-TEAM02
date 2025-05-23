@@ -38,11 +38,17 @@ public class MyStudyPage extends JFrame {
 
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
         	public boolean isCellEditable(int row, int column) {
+        		
         	    if (column == 4) {  // 수정 버튼 컬럼일 때만 특별히 검사
         	        MyStudyDTO dto = studyList.get(row);
         	        return dto.getLeaderId() == user.getUserId();  // 개설자인 경우만 편집 가능 (즉, 수정 버튼만 동작)
         	    }
-        	    return column == 3;  // 정보 버튼은 항상 가능
+        	    if (column == 3) return true; // 정보 보기 버튼
+                if (column == 5) return true; // ✅ 탈퇴 버튼도 모두 클릭 가능하게 추가
+
+                return false;
+        	   
+        	    
         	}
 
         };
@@ -176,7 +182,9 @@ public class MyStudyPage extends JFrame {
                     boolean result = new MyStudyDAO().withdrawFromStudy(selected.getStudyId(), user);
                     if (result) {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다.");
-                        dispose();
+                        // ✅ 정확한 현재 프레임 닫고 새로 띄우기
+                        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
+                        currentFrame.dispose();
                         new MyStudyPage(user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
@@ -186,6 +194,7 @@ public class MyStudyPage extends JFrame {
             clicked = false;
             return "탈퇴";
         }
+
 
         public boolean stopCellEditing() {
             clicked = false;
@@ -230,21 +239,21 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
+                System.out.println("selected study id" + selected.getStudyId());
                 if (selected.getLeaderId() == user.getUserId()) {
-                    StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());
-                    JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
-                    currentFrame.dispose(); // 현재 MyStudyPage 닫기
-                    new EditStudyPage(dto, user, currentFrame); // 새 페이지 열기
+                    StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());  // 여기에서 studyId 가져오기
+                    JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);     // 이전 창 전달
+                    new EditStudyPage(dto, user, currentFrame);  // user, 이전 페이지 넘기기
                 }
             }
             clicked = false;
             return "수정";
         }
 
-
         public boolean stopCellEditing() {
             clicked = false;
             return super.stopCellEditing();
         }
     }
+
 }

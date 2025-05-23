@@ -31,18 +31,34 @@ public class MyStudyDetailPage extends JFrame {
         RuleDTO rule = dao.getRuleInfo(studyId);
         boolean isLeader = dao.isLeader(user, studyId); 
 
-        // 2. 상단: 통계 요약
+     // 2. 상단: 통계 요약
         JPanel topPanel = new JPanel(new GridLayout(0, 1));
         topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        topPanel.add(new JLabel("📌 스터디명: " + summary.getStudyName()));
-        topPanel.add(new JLabel("👥 참여 인원: " + summary.getMemberCount()));
-        topPanel.add(new JLabel("💸 총 벌금: " + summary.getTotalFine() + "원"));
-        topPanel.add(new JLabel("🛠 최근 규칙 수정일: " +
-                (summary.getLastModified() != null ? summary.getLastModified().toString() : "없음")));
+
+        Font baseFont = UIManager.getFont("Label.font");
+        Font largeFont = baseFont.deriveFont(baseFont.getSize() + 4.0f); // 기존보다 4pt 증가
+
+        JLabel nameLabel = new JLabel("📌 스터디명: " + summary.getStudyName());
+        nameLabel.setFont(largeFont);
+        topPanel.add(nameLabel);
+
+        JLabel memberLabel = new JLabel("👥 참여 인원: " + summary.getMemberCount());
+        memberLabel.setFont(largeFont);
+        topPanel.add(memberLabel);
+
+        JLabel fineLabel = new JLabel("💸 총 벌금: " + summary.getTotalFine() + "원");
+        fineLabel.setFont(largeFont);
+        topPanel.add(fineLabel);
+
+        JLabel dateLabel = new JLabel("🛠 최근 규칙 수정일: " +
+                (summary.getLastModified() != null ? summary.getLastModified().toString() : "없음"));
+        dateLabel.setFont(largeFont);
+        topPanel.add(dateLabel);
+
         add(topPanel, BorderLayout.NORTH);
 
         // 3. 중단: 참여자 목록 테이블
-        String[] cols = isLeader ? new String[]{"이름", "누적 벌금", "관리"} : new String[]{"이름", "누적 벌금"};
+        String[] cols = isLeader ? new String[]{"스터디원", "누적 벌금", "관리"} : new String[]{"이름", "누적 벌금"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int row, int column) {
                 return isLeader && column == 2;
