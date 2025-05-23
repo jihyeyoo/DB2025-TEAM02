@@ -12,8 +12,10 @@ import java.awt.*;
 import java.util.List;
 
 public class MyStudyPage extends JFrame {
+    private JFrame previousPage;
 
-    public MyStudyPage(UserDTO user) {
+    public MyStudyPage(UserDTO user, JFrame previousPage) {
+        this.previousPage = previousPage;
         setTitle("자기 스터디 조회 페이지");
         setSize(900, 300);
         setLocationRelativeTo(null);
@@ -30,15 +32,19 @@ public class MyStudyPage extends JFrame {
             data[i][1] = dto.getLeaderName();
             data[i][2] = dto.getStartDate();
             data[i][3] = "정보 보기";
-            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";  // 개설자인 경우만 "수정"
+            data[i][4] = (dto.getLeaderId() == user.getUserId()) ? "수정" : "";
             data[i][5] = "탈퇴";
         }
 
-
         DefaultTableModel model = new DefaultTableModel(data, columnNames) {
-            public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 4;
-            }
+        	public boolean isCellEditable(int row, int column) {
+        	    if (column == 4) {  // 수정 버튼 컬럼일 때만 특별히 검사
+        	        MyStudyDTO dto = studyList.get(row);
+        	        return dto.getLeaderId() == user.getUserId();  // 개설자인 경우만 편집 가능 (즉, 수정 버튼만 동작)
+        	    }
+        	    return column == 3;  // 정보 버튼은 항상 가능
+        	}
+
         };
 
         JTable table = new JTable(model);
@@ -50,12 +56,26 @@ public class MyStudyPage extends JFrame {
         table.getColumn("수정").setCellRenderer(new EditButtonRenderer());
         table.getColumn("수정").setCellEditor(new EditButtonEditor(new JCheckBox(), studyList, user));
 
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
-        add(new JScrollPane(table));
+        // ✅ 아래 부분만 추가/수정됨 (기본 텍스트 뒤로 가기 버튼)
+        JPanel bottomPanel = new JPanel();
+        JButton backButton = new JButton("← 뒤로 가기");
+        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        backButton.setFocusPainted(false);
+        backButton.setBackground(Color.LIGHT_GRAY);
+        backButton.setForeground(Color.BLACK);
+
+        bottomPanel.add(backButton);
+        add(bottomPanel, BorderLayout.SOUTH);
         setVisible(true);
+        
+        backButton.addActionListener(e -> {
+            dispose(); //현재 창 닫기
+            previousPage.setVisible(true); // MyPage 다시 보이기
+        });
     }
 
-    // 정보 버튼 렌더러
     class InfoButtonRenderer extends JButton implements TableCellRenderer {
         public InfoButtonRenderer() {
             setOpaque(true);
@@ -68,7 +88,6 @@ public class MyStudyPage extends JFrame {
         }
     }
 
-    // 탈퇴 버튼 렌더러
     class WithdrawButtonRenderer extends JButton implements TableCellRenderer {
         public WithdrawButtonRenderer() {
             setOpaque(true);
@@ -83,13 +102,12 @@ public class MyStudyPage extends JFrame {
         }
     }
 
-    // 정보 보기 버튼 클릭 이벤트
     class InfoButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
         private List<MyStudyDTO> list;
         private int currentRow;
-        private UserDTO user;  // ✅ UserDTO 추가
+        private UserDTO user;
 
         public InfoButtonEditor(JCheckBox checkBox, List<MyStudyDTO> list, UserDTO user) {
             super(checkBox);
@@ -109,12 +127,14 @@ public class MyStudyPage extends JFrame {
         public Object getCellEditorValue() {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
-                // ✅ UserDTO 함께 전달
-                new MyStudyDetailPage(selected.getStudyId(), user);
+                JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button); // 현재 창 참조
+                currentFrame.dispose(); // 현재 MyStudyPage 창 닫기
+                new MyStudyDetailPage(selected.getStudyId(), user, currentFrame); // 이전 창도 넘기기
             }
             clicked = false;
             return "정보 보기";
         }
+
 
         public boolean stopCellEditing() {
             clicked = false;
@@ -122,8 +142,6 @@ public class MyStudyPage extends JFrame {
         }
     }
 
-
-    // 탈퇴 버튼 클릭 이벤트
     class WithdrawButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
@@ -159,7 +177,7 @@ public class MyStudyPage extends JFrame {
                     if (result) {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다.");
                         dispose();
-                        new MyStudyPage(user); // 새로고침
+                        new MyStudyPage(user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
                     }
@@ -174,7 +192,7 @@ public class MyStudyPage extends JFrame {
             return super.stopCellEditing();
         }
     }
-    
+
     class EditButtonRenderer extends JButton implements TableCellRenderer {
         public EditButtonRenderer() {
             setOpaque(true);
@@ -186,7 +204,7 @@ public class MyStudyPage extends JFrame {
             return this;
         }
     }
-    
+
     class EditButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean clicked;
@@ -213,20 +231,20 @@ public class MyStudyPage extends JFrame {
             if (clicked) {
                 MyStudyDTO selected = list.get(currentRow);
                 if (selected.getLeaderId() == user.getUserId()) {
-                    // 스터디 ID로 상세 정보 조회 후 수정 페이지로
                     StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());
-                    new EditStudyPage(dto);
+                    JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
+                    currentFrame.dispose(); // 현재 MyStudyPage 닫기
+                    new EditStudyPage(dto, user, currentFrame); // 새 페이지 열기
                 }
             }
             clicked = false;
             return "수정";
         }
 
+
         public boolean stopCellEditing() {
             clicked = false;
             return super.stopCellEditing();
         }
     }
-
 }
-

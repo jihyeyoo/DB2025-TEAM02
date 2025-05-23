@@ -15,7 +15,11 @@ public class MyStudyDetailPage extends JFrame {
 
     private MyStudyDetailDAO dao = new MyStudyDetailDAO();
 
-    public MyStudyDetailPage(int studyId, UserDTO user) {
+    private JFrame previousPage;
+
+    public MyStudyDetailPage(int studyId, UserDTO user, JFrame previousPage) {
+        this.previousPage = previousPage;
+
         setTitle("📘 마이스터디 상세 페이지");
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -90,6 +94,22 @@ public class MyStudyDetailPage extends JFrame {
         }
 
         add(rulePanel, BorderLayout.SOUTH);
+     // 5. 하단: 뒤로 가기 버튼
+        JPanel backPanel = new JPanel();
+        JButton backButton = new JButton("← 뒤로 가기");
+        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        backButton.setFocusPainted(false);
+        backButton.setBackground(Color.LIGHT_GRAY);
+        backButton.setForeground(Color.BLACK);
+        backPanel.add(backButton);
+
+        add(backPanel, BorderLayout.PAGE_END);
+
+        backButton.addActionListener(e -> {
+            dispose(); // 상세 페이지 닫기
+            new MyStudyPage(user, previousPage); // 이전 페이지 다시 열기
+        });
+
         setVisible(true);
     }
 

@@ -2,6 +2,7 @@ package GUI;
 
 import DAO.StudyEditDAO;
 import DTO.StudyEditDTO;
+import DTO.UserDTO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,9 +17,14 @@ public class EditStudyPage extends JFrame {
     private JComboBox<String> cycleCombo;
 
     private StudyEditDTO study;
+    private UserDTO user;
+    private JFrame previousPage;
 
-    public EditStudyPage(StudyEditDTO study) {
-        // ✅ study가 null일 경우 기본 객체 생성
+    public EditStudyPage(StudyEditDTO study, UserDTO user, JFrame previousPage) {
+        this.study = (study != null) ? study : new StudyEditDTO();
+        this.user = user;
+        this.previousPage = previousPage;
+        // study가 null일 경우 기본 객체 생성
         if (study == null) {
             study = new StudyEditDTO();
         }
@@ -33,7 +39,7 @@ public class EditStudyPage extends JFrame {
         JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // ✅ null-safe 값 세팅
+        // null-safe 값 세팅
         nameField = new JTextField(study.getName() != null ? study.getName() : "");
         descriptionArea = new JTextArea(study.getDescription() != null ? study.getDescription() : "", 3, 20);
         endDateField = new JTextField(
@@ -82,7 +88,23 @@ public class EditStudyPage extends JFrame {
                 JOptionPane.showMessageDialog(this, "수정에 실패했습니다.");
             }
         });
+        
+     // 아래에 뒤로가기 버튼 추가
+        JPanel backPanel = new JPanel();
+        JButton backButton = new JButton("← 뒤로 가기");
+        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        backButton.setFocusPainted(false);
+        backButton.setBackground(Color.LIGHT_GRAY);
+        backButton.setForeground(Color.BLACK);
+        backPanel.add(backButton);
+        add(backPanel, BorderLayout.SOUTH);
 
+        backButton.addActionListener(e -> {
+            dispose(); // 현재 창 닫기
+            new MyStudyPage(user, previousPage); // 다시 스터디 목록 창 열기
+        });
+
+        
         setVisible(true);
     }
 

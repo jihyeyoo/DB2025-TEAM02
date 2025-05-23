@@ -62,8 +62,8 @@ public class MyPage extends JFrame {
         });
 
         studyButton.addActionListener(e -> {
-            dispose();
-            new MyStudyPage(user);  // UserDTO 전달
+            setVisible(false);               // 창을 닫지 않고 숨기기
+            new MyStudyPage(user, this);     // 현재 MyPage 인스턴스를 넘겨줌
         });
 
         refundButton.addActionListener(e -> new RefundInfo(user));
