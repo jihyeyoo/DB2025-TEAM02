@@ -10,15 +10,17 @@ public class StudyListDTO {
     private String endDate;
     private String certMethod;
     private int deposit;
+    private String status;
 
     public StudyListDTO(int studyId, String name, String startDate,
-                        String endDate, String certMethod, int deposit) {
+                        String endDate, String certMethod, int deposit, String status) {
         this.studyId = studyId;
         this.name = name;
         this.startDate = startDate;
         this.endDate = endDate;
         this.certMethod = certMethod;
         this.deposit = deposit;
+        this.status = status;
     }
 
     public int getStudyId() { return studyId; }
@@ -27,4 +29,5 @@ public class StudyListDTO {
     public String getEndDate() { return endDate; }
     public String getCertMethod() { return certMethod; }
     public int getDeposit() { return deposit; }
+    public String getStatus() { return status; }
 }

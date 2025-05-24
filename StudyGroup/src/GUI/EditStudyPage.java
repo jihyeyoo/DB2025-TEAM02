@@ -14,17 +14,16 @@ public class EditStudyPage extends JFrame {
     private JTextArea descriptionArea;
     private JTextField endDateField;  // yyyy-MM-dd
     private JComboBox<String> certMethodCombo;
-    private JComboBox<String> cycleCombo;
+    private JTextField settleCycleField; // 정산 주기 직접 입력
 
     private StudyEditDTO study;
     private UserDTO user;
     private JFrame previousPage;
 
     public EditStudyPage(StudyEditDTO study, UserDTO user, JFrame previousPage) {
-    	this.study = (study != null) ? study : new StudyEditDTO();  // ✅ 조건부 할당 1줄이면 충분
+        this.study = (study != null) ? study : new StudyEditDTO();
         this.user = user;
         this.previousPage = previousPage;
-
 
         setTitle("스터디 정보 수정");
         setSize(500, 500);
@@ -35,24 +34,15 @@ public class EditStudyPage extends JFrame {
         JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // null-safe 값 세팅
         nameField = new JTextField(study.getName() != null ? study.getName() : "");
         descriptionArea = new JTextArea(study.getDescription() != null ? study.getDescription() : "", 3, 20);
-        endDateField = new JTextField(
-            study.getEndDate() != null ? study.getEndDate().toString() : ""
-        );
+        endDateField = new JTextField(study.getEndDate() != null ? study.getEndDate().toString() : "");
 
         certMethodCombo = new JComboBox<>(new String[]{"사진 인증", "출석 체크", "퀴즈 제출"});
-        certMethodCombo.setSelectedItem(
-            study.getCertMethod() != null ? study.getCertMethod() : "사진 인증"
-        );
+        certMethodCombo.setSelectedItem(study.getCertMethod() != null ? study.getCertMethod() : "사진 인증");
 
-        cycleCombo = new JComboBox<>(new String[]{"매주", "매월"});
-        cycleCombo.setSelectedItem(
-            study.getSettlementCycle() == 30 ? "매월" : "매주"
-        );
+        settleCycleField = new JTextField(String.valueOf(study.getSettlementCycle()));
 
-        // 배치
         panel.add(new JLabel("스터디 이름"));
         panel.add(nameField);
 
@@ -66,26 +56,24 @@ public class EditStudyPage extends JFrame {
         panel.add(new JLabel("인증 방식"));
         panel.add(certMethodCombo);
 
-        panel.add(new JLabel("정산 주기"));
-        panel.add(cycleCombo);
+        panel.add(new JLabel("정산 주기 (일)"));
+        panel.add(settleCycleField);
 
         JButton saveButton = new JButton("수정 저장");
-        panel.add(new JLabel());  // 빈칸
+        panel.add(new JLabel());
         panel.add(saveButton);
 
         add(panel, BorderLayout.CENTER);
 
-        // 저장 이벤트
         saveButton.addActionListener(e -> {
             if (updateStudyInfo()) {
                 JOptionPane.showMessageDialog(this, "스터디 정보가 수정되었습니다.");
-                dispose();  // 수정 완료 후 닫기
+                dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "수정에 실패했습니다.");
             }
         });
-        
-     // 아래에 뒤로가기 버튼 추가
+
         JPanel backPanel = new JPanel();
         JButton backButton = new JButton("← 뒤로 가기");
         backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
@@ -96,35 +84,34 @@ public class EditStudyPage extends JFrame {
         add(backPanel, BorderLayout.SOUTH);
 
         backButton.addActionListener(e -> {
-            dispose(); // 현재 창 닫기
-            new MyStudyPage(user, previousPage); // 다시 스터디 목록 창 열기
+            dispose();
+            new MyStudyPage(user, previousPage);
         });
 
-        
         setVisible(true);
     }
 
     private boolean updateStudyInfo() {
         try {
-            // 값 세팅
-        	System.out.println("업데이트 대상 studyId: " + study.getStudyId());
-
             study.setName(nameField.getText().trim());
             study.setDescription(descriptionArea.getText().trim());
 
             String endDateText = endDateField.getText().trim();
             if (!endDateText.isEmpty()) {
-                study.setEndDate(Date.valueOf(endDateText));  // yyyy-MM-dd
+                study.setEndDate(Date.valueOf(endDateText));
             }
 
             String certMethod = (String) certMethodCombo.getSelectedItem();
-            String cycleStr = (String) cycleCombo.getSelectedItem();
-            int cycle = cycleStr.equals("매주") ? 7 : 30;
-
             study.setCertMethod(certMethod);
+
+            String cycleText = settleCycleField.getText().trim();
+            if (!cycleText.matches("\\d+")) {
+                JOptionPane.showMessageDialog(this, "정산 주기는 숫자만 입력해주세요.");
+                return false;
+            }
+            int cycle = Integer.parseInt(cycleText);
             study.setSettlementCycle(cycle);
 
-            // DAO 호출
             return new StudyEditDAO().updateStudyInfo(study);
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -103,7 +103,7 @@ public class SubmitCert extends JFrame {
 
             int selectedStudyId = studyNameToIdMap.get(selectedStudy);
             DailyCertsDAO certDao = new DailyCertsDAO();
-            boolean result = certDao.submitCertification(user.getUserId(), selectedStudyId, date, description);
+            boolean result = certDao.submitCertification(user.getUserId(), selectedStudyId, date, description, "pending");
 
             if (result) {
                 JOptionPane.showMessageDialog(this, "제출 완료!");

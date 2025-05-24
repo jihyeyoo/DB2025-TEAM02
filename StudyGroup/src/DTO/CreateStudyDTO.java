@@ -1,8 +1,5 @@
 package DTO;
 
-/**
- * StudyGroups 테이블에 INSERT할 데이터를 담는 DTO 클래스
- */
 public class CreateStudyDTO {
     private String name;
     private int leaderId;
@@ -11,9 +8,10 @@ public class CreateStudyDTO {
     private String endDate;
     private String certMethod;
     private int deposit;
+    private RuleDTO rule;
 
     public CreateStudyDTO(String name, int leaderId, String description,
-                          String startDate, String endDate, String certMethod, int deposit) {
+                          String startDate, String endDate, String certMethod, int deposit, RuleDTO rule) {
         this.name = name;
         this.leaderId = leaderId;
         this.description = description;
@@ -21,6 +19,7 @@ public class CreateStudyDTO {
         this.endDate = endDate;
         this.certMethod = certMethod;
         this.deposit = deposit;
+        this.rule = rule;
     }
 
     public String getName() { return name; }
@@ -30,4 +29,7 @@ public class CreateStudyDTO {
     public String getEndDate() { return endDate; }
     public String getCertMethod() { return certMethod; }
     public int getDeposit() { return deposit; }
+
+    // 🔥 추가된 getter
+    public RuleDTO getRule() { return rule; }
 }

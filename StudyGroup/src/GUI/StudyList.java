@@ -127,7 +127,7 @@ public class StudyList extends JFrame {
         
         
         // 03. DB - 테이블
-        String[] columnNames = {"번호", "이름", "시작일", "종료일", "인증방식", "보증금", "스터디ID"};
+        String[] columnNames = {"번호", "이름", "시작일", "종료일", "인증방식", "보증금", "스터디ID", "상태"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -226,7 +226,8 @@ public class StudyList extends JFrame {
                 dto.getEndDate(),
                 dto.getCertMethod(),
                 dto.getDeposit(),
-            	dto.getStudyId()
+            	dto.getStudyId(),
+                dto.getStatus()
             });
         }
     }

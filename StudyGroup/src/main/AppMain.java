@@ -9,9 +9,9 @@ public class AppMain {
 
     public static void main(String[] args) {
         String DRIVER = "com.mysql.cj.jdbc.Driver";
-        String DBURL = "jdbc:mysql://localhost:3306/db2025Team02";
-        String DBID = "root"; //본인 sql user 이름 입력하세요
-        String DBPW = ""; //본인 sql pw 입력하세요
+        String DBURL = "jdbc:mysql://localhost:3306/DB2025Team02";
+        String DBID = "DB2025Team02"; //본인 sql user 이름 입력하세요
+        String DBPW = "DB2025Team02"; //본인 sql pw 입력하세요
 
         try {
             Class.forName(DRIVER);

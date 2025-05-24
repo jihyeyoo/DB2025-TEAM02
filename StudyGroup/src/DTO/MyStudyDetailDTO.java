@@ -7,14 +7,12 @@ public class MyStudyDetailDTO {
     private String studyName;
     private int memberCount;
     private int totalFine;
-    private Date lastModified;
 
-    public MyStudyDetailDTO(int studyId, String studyName, int memberCount, int totalFine, Date lastModified) {
+    public MyStudyDetailDTO(int studyId, String studyName, int memberCount, int totalFine) {
         this.studyId = studyId;
         this.studyName = studyName;
         this.memberCount = memberCount;
         this.totalFine = totalFine;
-        this.lastModified = lastModified;
     }
 
 
@@ -33,9 +31,5 @@ public class MyStudyDetailDTO {
 
     public int getTotalFine() {
         return totalFine;
-    }
-
-    public Date getLastModified() {
-        return lastModified;
     }
 }

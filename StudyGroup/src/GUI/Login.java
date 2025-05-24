@@ -1,6 +1,7 @@
 package GUI;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -13,74 +14,75 @@ public class Login extends JFrame {
 
     public Login() {
         setTitle("로그인");
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1000, 700);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
 
+        Font font = new Font("맑은 고딕", Font.PLAIN, 18);
+
         JLabel idLabel = new JLabel("아이디:");
-        idLabel.setBounds(50, 50, 80, 25);
+        idLabel.setBounds(320, 220, 100, 40);
+        idLabel.setFont(font);
         JTextField idField = new JTextField();
-        idField.setBounds(140, 50, 180, 25);
+        idField.setBounds(430, 220, 250, 40);
+        idField.setFont(font);
 
         JLabel pwLabel = new JLabel("비밀번호:");
-        pwLabel.setBounds(50, 100, 80, 25);
+        pwLabel.setBounds(320, 280, 100, 40);
+        pwLabel.setFont(font);
         JPasswordField pwField = new JPasswordField();
-        pwField.setBounds(140, 100, 180, 25);
+        pwField.setBounds(430, 280, 250, 40);
+        pwField.setFont(font);
 
         JButton loginButton = new JButton("로그인");
-        loginButton.setBounds(80, 160, 100, 30);
-        add(loginButton);
-
+        loginButton.setBounds(380, 360, 120, 50);
+        loginButton.setFont(font);
         JButton signupButton = new JButton("회원가입");
-        signupButton.setBounds(200, 160, 100, 30);
-        add(signupButton);
+        signupButton.setBounds(530, 360, 120, 50);
+        signupButton.setFont(font);
 
         add(idLabel);
         add(idField);
         add(pwLabel);
         add(pwField);
+        add(loginButton);
+        add(signupButton);
 
-        // 로그인 버튼 클릭 이벤트
-        loginButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String loginId = idField.getText();
-                String password = new String(pwField.getPassword());
+        loginButton.addActionListener(e -> {
+            String loginId = idField.getText();
+            String password = new String(pwField.getPassword());
 
-                if (loginId.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "아이디와 비밀번호를 모두 입력해주세요.");
-                    return;
+            if (loginId.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "아이디와 비밀번호를 모두 입력해주세요.");
+                return;
+            }
+
+            try {
+                LoginDAO dao = new LoginDAO();
+                LoginResultDTO result = dao.login(loginId, password);
+
+                if (result.getStatus() == LoginStatus.SUCCESS) {
+                    UserDTO user = result.getUser();
+                    JOptionPane.showMessageDialog(null, user.getUserName() + "님, 환영합니다!");
+                    dispose();
+                    new StudyList(user);
+                } else if (result.getStatus() == LoginStatus.INVALID_PASSWORD) {
+                    JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다.");
+                } else if (result.getStatus() == LoginStatus.ID_NOT_FOUND) {
+                    JOptionPane.showMessageDialog(null, "존재하지 않는 아이디입니다.");
+                } else {
+                    JOptionPane.showMessageDialog(null, "로그인 중 오류 발생.");
                 }
-
-                try {
-                    LoginDAO dao = new LoginDAO();
-                    LoginResultDTO result = dao.login(loginId, password);
-
-                    if (result.getStatus() == LoginStatus.SUCCESS) {
-                        UserDTO user = result.getUser();  // UserDTO 얻기
-                        JOptionPane.showMessageDialog(null, user.getUserName() + "님, 환영합니다!");
-                        dispose();  // 로그인 창 닫기
-                        new StudyList(user);  // DTO 전달
-                    } else if (result.getStatus() == LoginStatus.INVALID_PASSWORD) {
-                        JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다.");
-                    } else if (result.getStatus() == LoginStatus.ID_NOT_FOUND) {
-                        JOptionPane.showMessageDialog(null, "존재하지 않는 아이디입니다.");
-                    } else {
-                        JOptionPane.showMessageDialog(null, "로그인 중 오류 발생.");
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "DB 연결 오류: " + ex.getMessage());
-                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "DB 연결 오류: " + ex.getMessage());
             }
         });
 
-        // 회원가입 버튼 클릭 이벤트
-        signupButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-                new SignUp();
-            }
+        signupButton.addActionListener(e -> {
+            dispose();
+            new SignUp();
         });
 
         setVisible(true);

@@ -8,15 +8,15 @@ public class DailyCertsDTO {
     private int studyId;
     private Date certDate;
     private String content;
-    private boolean isApproved;
+    private String approvalStatus;  // ✅ 변경된 부분
 
-    public DailyCertsDTO(int certId, int userId, int studyId, Date certDate, String content, boolean isApproved) {
+    public DailyCertsDTO(int certId, int userId, int studyId, Date certDate, String content, String approvalStatus) {
         this.certId = certId;
         this.userId = userId;
         this.studyId = studyId;
         this.certDate = certDate;
         this.content = content;
-        this.isApproved = isApproved;
+        this.approvalStatus = approvalStatus;
     }
 
     // Getter Methods
@@ -40,20 +40,8 @@ public class DailyCertsDTO {
         return content;
     }
 
-    public boolean isApproved() {
-        return isApproved;
+    public String getApprovalStatus() {
+        return approvalStatus;
     }
 
-    // Optional: toString() for debugging
-    @Override
-    public String toString() {
-        return "DailyCertsDTO{" +
-                "certId=" + certId +
-                ", userId=" + userId +
-                ", studyId=" + studyId +
-                ", certDate=" + certDate +
-                ", content='" + content + '\'' +
-                ", isApproved=" + isApproved +
-                '}';
-    }
 }

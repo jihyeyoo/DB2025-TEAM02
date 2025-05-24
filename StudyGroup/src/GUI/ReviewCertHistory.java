@@ -73,11 +73,17 @@ public class ReviewCertHistory extends JFrame {
         List<DailyCertsDTO> list = dao.getCertificationsForUser(studyId, userId);
 
         for (DailyCertsDTO dto : list) {
-            String approvalText = dto.isApproved() ? "승인됨" : "대기중";
+            String statusKor = switch (dto.getApprovalStatus()) {
+                case "approved" -> "승인됨";
+                case "rejected" -> "반려됨";
+                case "pending" -> "대기중";
+                default -> "알 수 없음";
+            };
+
             tableModel.addRow(new Object[]{
-                dto.getCertDate().toString(),
-                dto.getContent(),
-                approvalText
+                    dto.getCertDate().toString(),
+                    dto.getContent(),
+                    statusKor
             });
         }
 

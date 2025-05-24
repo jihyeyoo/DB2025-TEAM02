@@ -11,62 +11,70 @@ import java.util.List;
 
 import main.AppMain;
 
+import static java.sql.DriverManager.println;
+
 public class MyStudyDetailDAO {
 
     // 1. 스터디 통계 + 기본 정보 (스터디명, 스터디장, 인원수, 총벌금)
 	public MyStudyDetailDTO getStudySummary(int studyId) {
 		String summarySql = """
-			    SELECT sg.study_id, sg.name,
-			           (SELECT COUNT(*) FROM GroupMembers gm WHERE gm.study_id = sg.study_id AND gm.status = 'active') AS member_count,
-			           (SELECT IFNULL(SUM(gm.accumulated_fine), 0) FROM GroupMembers gm WHERE gm.study_id = sg.study_id AND gm.status = 'active') AS total_fine,
-			           r.last_modified
-			    FROM StudyGroups sg
-			    LEFT JOIN Rules r ON sg.study_id = r.study_id
-			    WHERE sg.study_id = ?
-			""";
+        SELECT ss.study_id, ss.study_name,
+               ss.member_count,
+               ss.total_fine
+        FROM StudySummary ss
+        WHERE ss.study_id = ?
+        """;
 
-	    try (PreparedStatement stmt = AppMain.conn.prepareStatement(summarySql)) {
-	        stmt.setInt(1, studyId);
-	        ResultSet rs = stmt.executeQuery();
-	        if (rs.next()) {
-	        	return new MyStudyDetailDTO(
-	        		    rs.getInt("study_id"),
-	        		    rs.getString("name"),
-	        		    rs.getInt("member_count"),
-	        		    rs.getInt("total_fine"),
-	        		    rs.getDate("last_modified")
-	        		);
-
-	        }
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	    return null;
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(summarySql)) {
+			stmt.setInt(1, studyId);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return new MyStudyDetailDTO(
+						rs.getInt("study_id"),
+						rs.getString("study_name"),
+						rs.getInt("member_count"),
+						rs.getInt("total_fine")
+				);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 
-    // 2. 참여자별 정보 (이름, 누적벌금)
+
+	// 2. 참여자별 정보 (이름, 누적벌금)
 	 public List<StudyMemberDTO> getMemberList(int studyId) {
 	        List<StudyMemberDTO> list = new ArrayList<>();
 	        String sql = """
-	            SELECT user_name, accumulated_fine
-	            FROM StudyMember_Summary
-	            WHERE study_id = ?
+	            SELECT
+                 u.user_id,
+                 u.user_name,
+                 gm.accumulated_fine
+             FROM GroupMembers gm
+             JOIN Users u ON gm.user_id = u.user_id
+             WHERE gm.study_id = ?
+               AND gm.status = 'active'
+             
 	        """;
 
-	        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-	            stmt.setInt(1, studyId);
-	            ResultSet rs = stmt.executeQuery();
-	            while (rs.next()) {
-	                list.add(new StudyMemberDTO(
-	                    rs.getString("user_name"),
-	                    rs.getInt("accumulated_fine")
-	                ));
-	            }
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
-	        return list;
+
+		 try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			 stmt.setInt(1, studyId);
+			 ResultSet rs = stmt.executeQuery();
+			 while (rs.next()) {
+				 list.add(new StudyMemberDTO(
+						 rs.getString("user_name"),
+						 rs.getInt("accumulated_fine"),
+						 rs.getInt("user_id")
+				 ));
+			 }
+		 } catch (Exception e) {
+			 e.printStackTrace();
+		 }
+
+		 return list;
 	    }
     // 3. 규칙 정보
     public RuleDTO getRuleInfo(int studyId) {
@@ -114,5 +122,30 @@ public class MyStudyDetailDAO {
         }
         return false;
     }
+
+
+	//강퇴시키기
+	public boolean kickMember(int studyId, int targetUserId) {
+
+		String sql = """
+        UPDATE GroupMembers
+        SET status = 'withdrawn'
+        WHERE study_id = ? AND user_id = ? AND status = 'active'
+    """;
+
+		System.out.println("studyId: " + studyId + ", targetUserId: " + targetUserId);
+
+
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			stmt.setInt(1, studyId);
+			stmt.setInt(2, targetUserId);
+			int updated = stmt.executeUpdate();
+			return updated > 0; // 강퇴 성공 시 true
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 
 }

@@ -10,7 +10,7 @@ public class StudyListDAO {
 
     public List<StudyListDTO> getAllStudies() {
         List<StudyListDTO> list = new ArrayList<>();
-        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit FROM StudyGroups";
+        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit, status FROM StudyGroups";
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -22,7 +22,8 @@ public class StudyListDAO {
                     rs.getString("start_date"),
                     rs.getString("end_date"),
                     rs.getString("cert_method"),
-                    rs.getInt("deposit")
+                    rs.getInt("deposit"),
+                        rs.getString("status")
                 );
                 list.add(dto);
             }
@@ -36,7 +37,7 @@ public class StudyListDAO {
     
     public List<StudyListDTO> searchStudiesByName(String keyword) {
         List<StudyListDTO> list = new ArrayList<>();
-        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit " +
+        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit, status " +
                      "FROM StudyGroups WHERE name LIKE ? ORDER BY name ASC";
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
@@ -51,7 +52,8 @@ public class StudyListDAO {
                     rs.getString("start_date"),
                     rs.getString("end_date"),
                     rs.getString("cert_method"),
-                    rs.getInt("deposit")
+                    rs.getInt("deposit"),
+                        rs.getString("status")
                 );
                 list.add(dto);
             }
@@ -74,8 +76,8 @@ public class StudyListDAO {
         if (!allowedFields.contains(sortField)) sortField = "name";
         if (!allowedOrder.contains(sortOrder)) sortOrder = "ASC";
 
-        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit " +
-                     "FROM StudyGroups ORDER BY " + sortField + " " + sortOrder;
+        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit, status " +
+                "FROM StudyGroups ORDER BY " + sortField + " " + sortOrder;
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -87,7 +89,8 @@ public class StudyListDAO {
                     rs.getString("start_date"),
                     rs.getString("end_date"),
                     rs.getString("cert_method"),
-                    rs.getInt("deposit")
+                    rs.getInt("deposit"),
+                        rs.getString("status")
                 );
                 list.add(dto);
             }
@@ -109,7 +112,7 @@ public class StudyListDAO {
         if (!allowedFields.contains(sortField)) sortField = "name";
         if (!allowedOrder.contains(sortOrder)) sortOrder = "ASC";
 
-        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit " +
+        String sql = "SELECT study_id, name, start_date, end_date, cert_method, deposit, status " +
                      "FROM StudyGroups WHERE name LIKE ? ORDER BY " + sortField + " " + sortOrder;
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
@@ -123,7 +126,8 @@ public class StudyListDAO {
                     rs.getString("start_date"),
                     rs.getString("end_date"),
                     rs.getString("cert_method"),
-                    rs.getInt("deposit")
+                    rs.getInt("deposit"),
+                        rs.getString("status")
                 );
                 list.add(dto);
             }
@@ -138,12 +142,13 @@ public class StudyListDAO {
     public List<StudyListDTO> getStudiesByMember(int userId) {
         List<StudyListDTO> list = new ArrayList<>();
         String sql = """
-            SELECT sg.study_id, sg.name, sg.start_date, sg.end_date, sg.cert_method, sg.deposit
-            FROM StudyGroups sg
-            JOIN GroupMembers gm ON sg.study_id = gm.study_id
-            WHERE gm.user_id = ? AND gm.status = 'active'
-            ORDER BY sg.name ASC
-        """;
+    SELECT sg.study_id, sg.name, sg.start_date, sg.end_date, sg.cert_method, sg.deposit, sg.status
+    FROM StudyGroups sg
+    JOIN GroupMembers gm ON sg.study_id = gm.study_id
+    WHERE gm.user_id = ? AND gm.status = 'active'
+    ORDER BY sg.name ASC
+""";
+
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
@@ -156,7 +161,8 @@ public class StudyListDAO {
                     rs.getString("start_date"),
                     rs.getString("end_date"),
                     rs.getString("cert_method"),
-                    rs.getInt("deposit")
+                    rs.getInt("deposit"),
+                        rs.getString("status")
                 ));
             }
         } catch (SQLException e) {

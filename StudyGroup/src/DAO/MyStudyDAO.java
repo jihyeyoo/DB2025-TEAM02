@@ -10,45 +10,6 @@ import java.util.List;
 
 public class MyStudyDAO {
 
-    public boolean createStudyGroup(String name, int leaderId, String description,
-                                    Date startDate, Date endDate, String certMethod, int deposit) {
-
-        String insertGroupSQL = "INSERT INTO StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        String insertLeaderSQL = "INSERT INTO GroupMembers (study_id, user_id, status) VALUES (?, ?, 'active')";
-
-        try (PreparedStatement groupStmt = AppMain.conn.prepareStatement(insertGroupSQL, Statement.RETURN_GENERATED_KEYS)) {
-            groupStmt.setString(1, name);
-            groupStmt.setInt(2, leaderId);
-            groupStmt.setString(3, description);
-            groupStmt.setDate(4, startDate);
-            groupStmt.setDate(5, endDate);
-            groupStmt.setString(6, certMethod);
-            groupStmt.setInt(7, deposit);
-
-            int rows = groupStmt.executeUpdate();
-
-            if (rows > 0) {
-                try (ResultSet rs = groupStmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        int studyId = rs.getInt(1);
-
-                        try (PreparedStatement leaderStmt = AppMain.conn.prepareStatement(insertLeaderSQL)) {
-                            leaderStmt.setInt(1, studyId);
-                            leaderStmt.setInt(2, leaderId);
-                            int memberRows = leaderStmt.executeUpdate();
-
-                            return memberRows > 0;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
     public List<MyStudyDTO> getMyStudies(UserDTO user) {
         List<MyStudyDTO> studyList = new ArrayList<>();
 
@@ -57,15 +18,8 @@ public class MyStudyDAO {
                 "FROM GroupMembers gm " +
                 "JOIN StudyGroups sg ON gm.study_id = sg.study_id " +
                 "JOIN Users u ON sg.leader_id = u.user_id " +
-                "WHERE gm.user_id = ? " +
-                "ORDER BY " +
-                "  CASE sg.status " +
-                "    WHEN '진행중' THEN 0 " +
-                "    WHEN '모집중' THEN 1 " +
-                "    WHEN '종료' THEN 2 " +
-                "    ELSE 3 " +
-                "  END, " +
-                "  sg.start_date DESC";
+                "WHERE gm.user_id = ? AND sg.status = 'ongoing' " +
+                "ORDER BY sg.start_date DESC";
 
         try (PreparedStatement pstmt = AppMain.conn.prepareStatement(sql)) {
             pstmt.setInt(1, user.getUserId());
@@ -89,18 +43,53 @@ public class MyStudyDAO {
     }
 
     public boolean withdrawFromStudy(int studyId, UserDTO user) {
-        String sql = "DELETE FROM GroupMembers WHERE study_id = ? AND user_id = ?";
-        try (PreparedStatement pstmt = AppMain.conn.prepareStatement(sql)) {
-            pstmt.setInt(1, studyId);
-            pstmt.setInt(2, user.getUserId());
-            int affected = pstmt.executeUpdate();
-            return affected > 0;
-        } catch (SQLException e) {
+        try {
+            // 1. 본인이 스터디장인지 확인
+            String checkLeaderSql = "SELECT leader_id FROM StudyGroups WHERE study_id = ?";
+            try (PreparedStatement checkStmt = AppMain.conn.prepareStatement(checkLeaderSql)) {
+                checkStmt.setInt(1, studyId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    int leaderId = rs.getInt("leader_id");
+
+                    // 트랜잭션 시작
+                    AppMain.conn.setAutoCommit(false);
+
+                    // 2. GroupMembers 상태 'withdrawn'으로 변경
+                    String updateMemberSql = "UPDATE GroupMembers SET status = 'withdrawn' WHERE study_id = ? AND user_id = ?";
+                    try (PreparedStatement updateStmt = AppMain.conn.prepareStatement(updateMemberSql)) {
+                        updateStmt.setInt(1, studyId);
+                        updateStmt.setInt(2, user.getUserId());
+                        updateStmt.executeUpdate();
+                    }
+
+                    // 3. 만약 스터디장이면 StudyGroups.status = 'closed'로 변경
+                    if (user.getUserId() == leaderId) {
+                        String updateStudySql = "UPDATE StudyGroups SET status = 'closed' WHERE study_id = ?";
+                        try (PreparedStatement updateStudyStmt = AppMain.conn.prepareStatement(updateStudySql)) {
+                            updateStudyStmt.setInt(1, studyId);
+                            updateStudyStmt.executeUpdate();
+                        }
+                    }
+
+                    AppMain.conn.commit();
+                    AppMain.conn.setAutoCommit(true);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            try {
+                AppMain.conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
-            return false;
         }
+
+        return false;
     }
-    
+
+
     public int getStudyCountByUser(int userId) {
         String sql = "SELECT COUNT(*) FROM GroupMembers WHERE user_id = ?";
         try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
