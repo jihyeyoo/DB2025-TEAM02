@@ -52,7 +52,7 @@ CREATE TABLE DailyCerts (
     study_id INT,								-- 인증자가 속한 스터디의 ID(FK)
     cert_date DATE,								-- 인증한 날짜
     content TEXT,								-- 인증 자료? 설명이나 기록, 링크/경로 등
-    is_approved BOOLEAN DEFAULT FALSE,			-- 스터디장 승인 여부 (default false 빼고 null로 둬도 괜찮긴 한데 일단 null 최대한 줄입니다)
+    is_approved VARCHAR(20) ENUM('approved', 'await', 'rejected') DEFAULT 'await',			-- 스터디장 승인 여부
     FOREIGN KEY (user_id) REFERENCES Users(user_id),			-- 인증자의 유저 ID를 참조하는 외래키
     FOREIGN KEY (study_id) REFERENCES StudyGroups(study_id)		-- 인증자가 속한 스터디 ID를 참조하는 외래키
 );
@@ -161,5 +161,4 @@ FROM DailyCerts dc
          JOIN Users u ON dc.user_id = u.user_id
          JOIN StudyGroups sg ON dc.study_id = sg.study_id
 WHERE
-    dc.is_approved = FALSE
-;
+    dc.is_approved = 'await';
