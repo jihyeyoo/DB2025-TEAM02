@@ -78,7 +78,7 @@ public class DailyCertsDAO {
 	}
 
 	public List<DailyCertsDTO> getCertsByStatus(int studyId, String status) {
-		String sql = "SELECT * FROM db2025team02DailyCerts WHERE study_id = ? AND approval_status = ?";
+		String sql = "SELECT * FROM DB2025Team02PendingCertifications WHERE study_id = ? AND approval_status = ?";
 		List<DailyCertsDTO> list = new ArrayList<>();
 
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
@@ -104,7 +104,7 @@ public class DailyCertsDAO {
 	}
 
 	public boolean updateCertificationStatus(int certId, String status) {
-		String sql = "UPDATE db2025team02DailyCerts SET approval_status = ? WHERE cert_id = ?";
+		String sql = "UPDATE DB2025Team02PendingCertifications SET approval_status = ? WHERE cert_id = ?";
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
 			stmt.setString(1, status);
 			stmt.setInt(2, certId);
@@ -115,7 +115,7 @@ public class DailyCertsDAO {
 		}
 	}
 
-	//인덱스 1번 활용 - 인증 기한 내에 인증 제출을 했으면 제출이 되지 않도록함
+	//인덱스 1번 활용 - 인증 기한 내에 인증 제출을 했으면 제출이 되지 않도록 함
 	public boolean hasCertifiedWithinPeriod(int userId, int studyId, Date startDate, Date endDate) {
 		String sql = """
             SELECT COUNT(*) FROM DB2025Team02DailyCerts
