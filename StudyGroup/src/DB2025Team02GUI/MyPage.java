@@ -42,20 +42,25 @@ public class MyPage extends JFrame {
         listButton.setFont(font);
         listButton.setBounds(380, 270, 220, 50);
         add(listButton);
+        
+        JButton certButton = new JButton("인증 제출");
+        certButton.setFont(font);
+        certButton.setBounds(380, 330, 220, 50);
+        add(certButton);
 
         JButton chargeButton = new JButton("포인트 충전");
         chargeButton.setFont(font);
-        chargeButton.setBounds(380, 330, 220, 50);
+        chargeButton.setBounds(380, 390, 220, 50);
         add(chargeButton);
 
         JButton refundButton = new JButton("환급 정보");
         refundButton.setFont(font);
-        refundButton.setBounds(380, 390, 220, 50);
+        refundButton.setBounds(380, 450, 220, 50);
         add(refundButton);
 
         JButton logoutButton = new JButton("로그아웃");
         logoutButton.setFont(font);
-        logoutButton.setBounds(380, 450, 220, 50);
+        logoutButton.setBounds(380, 510, 220, 50);
         add(logoutButton);
 
         studyButton.addActionListener(e -> {
@@ -66,6 +71,11 @@ public class MyPage extends JFrame {
         listButton.addActionListener(e -> {
             dispose();
             new StudyList(user);
+        });
+        
+        certButton.addActionListener(e -> {
+            dispose();
+            new MyCertPage(user);
         });
 
         chargeButton.addActionListener(e -> {
