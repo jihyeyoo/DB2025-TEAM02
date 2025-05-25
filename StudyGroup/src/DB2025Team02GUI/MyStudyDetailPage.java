@@ -186,7 +186,7 @@ public class MyStudyDetailPage extends JFrame {
                         dispose();
                         new MyStudyDetailPage(studyId, user, previousPage);
                     } else {
-                        JOptionPane.showMessageDialog(this, "벌금 부과 중 문제가 발생했습니다.");
+                        JOptionPane.showMessageDialog(this, "벌금을 부과할 대상자가 없습니다.");
                     }
                 }
             });
