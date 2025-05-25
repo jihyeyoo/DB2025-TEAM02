@@ -38,7 +38,7 @@ public class StudyDetailDAO {
     public RuleDTO getRuleByStudyId(int studyId) {
         String sql = """
             SELECT cert_deadline, cert_cycle, grace_period,
-                   fine_late, fine_absent, ptsettle_cycle, last_modified
+                   fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date
             FROM db2025team02Rules
             WHERE study_id = ?
         """;
@@ -55,7 +55,8 @@ public class StudyDetailDAO {
                         rs.getInt("fine_late"),
                         rs.getInt("fine_absent"),
                         rs.getInt("ptsettle_cycle"),
-                        rs.getDate("last_modified")
+                        rs.getDate("last_modified"),
+                        rs.getDate("next_cert_date")
                 );
             }
 
