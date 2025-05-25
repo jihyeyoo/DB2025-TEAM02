@@ -71,6 +71,7 @@ CREATE TABLE DB2025Team02Rules (
     fine_absent INT,						-- 미인증 시 벌금 (보증금 깎을 때는 penalty_absent-penalty_late값으로 처리?)
     ptsettle_cycle INT,						-- 보증금 정산 주기 (예: 7일)
     last_modified DATE,						-- 마지막 규칙 수정일
+    next_cert_date DATE,					-- 다음 인증 날짜 
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)		-- 해당 룰 설립한 스터디 ID를 참조하는 외래키
 );
 
@@ -191,3 +192,19 @@ CREATE EVENT DB2025Team02UpdateStudyStatus
 
 DELIMITER ;
 
+
+-- 즉시 next_cert_date를 한 번 수동으로 갱신하는 쿼리
+SET SQL_SAFE_UPDATES = 0;
+UPDATE DB2025Team02Rules r
+JOIN DB2025Team02StudyGroups sg ON r.study_id = sg.study_id
+SET r.next_cert_date =
+  CASE
+    WHEN CURDATE() <= sg.start_date THEN 
+      DATE_ADD(sg.start_date, INTERVAL r.cert_cycle DAY)
+    ELSE 
+      DATE_ADD(
+        sg.start_date,
+        INTERVAL CEIL(DATEDIFF(CURDATE(), sg.start_date) / r.cert_cycle) * r.cert_cycle DAY
+      )
+  END;
+  
