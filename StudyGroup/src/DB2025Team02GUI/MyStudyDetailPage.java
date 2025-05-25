@@ -180,11 +180,11 @@ public class MyStudyDetailPage extends JFrame {
                         "오늘 기준으로 인증하지 않은 사용자에게 벌금을 부과하시겠습니까?",
                         "벌금 부과 확인", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean result = dao.imposeFineIfOverdue(studyId);  // DAO 호출
-                    if (result) {
-                        JOptionPane.showMessageDialog(this, "벌금이 성공적으로 부과되었습니다.");
+                    int finedCount = dao.imposeFineIfOverdue(studyId);  // DAO 호출
+                    if (finedCount > 0) {
+                        JOptionPane.showMessageDialog(this, finedCount + "명에게 벌금이 부과되었습니다.");
                         dispose();
-                        new MyStudyDetailPage(studyId, user, previousPage); // 새로고침
+                        new MyStudyDetailPage(studyId, user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(this, "벌금 부과 중 문제가 발생했습니다.");
                     }

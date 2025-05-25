@@ -147,7 +147,9 @@ public class MyStudyDetailDAO {
 	}
 	
 	// 벌금 부과
-	public boolean imposeFineIfOverdue(int studyId) {
+	public int imposeFineIfOverdue(int studyId) {
+		int finedCount = 0;
+		
 	    RuleDTO rule = getRuleInfo(studyId);
 	    List<StudyMemberDTO> members = getMemberList(studyId);
 	    DailyCertsDAO certDAO = new DailyCertsDAO();
@@ -212,6 +214,8 @@ public class MyStudyDetailDAO {
 	                    insertStmt.setInt(4, fine);
 	                    insertStmt.executeUpdate();
 	                }
+	                
+	               finedCount++;
 
 	            } else {
 	                // 포인트 부족 → 정지 처리
@@ -225,7 +229,7 @@ public class MyStudyDetailDAO {
 
 	        AppMain.conn.commit(); // 트랜잭션 커밋
 	        AppMain.conn.setAutoCommit(true);
-	        return true;
+	        return finedCount;
 
 	    } catch (Exception e) {
 	        try {
@@ -242,7 +246,7 @@ public class MyStudyDetailDAO {
 	        e.printStackTrace();
 	    }
 
-	    return false;
+	    return 0;
 	}
 
 
