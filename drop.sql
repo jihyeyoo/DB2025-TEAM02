@@ -1,6 +1,6 @@
 -- drop.sql: 모든 객체 제거
 
--- 테이블 삭제 (외래키 의존성 고려: 자식 → 부모 순서)
+-- 테이블 삭제
 DROP TABLE IF EXISTS DB2025Team02Fines;
 DROP TABLE IF EXISTS DB2025Team02Deposits;
 DROP TABLE IF EXISTS DB2025Team02Rules;
