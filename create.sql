@@ -32,6 +32,11 @@ CREATE TABLE DB2025Team02StudyGroups (
     deposit INT,                                           -- 보증금
     status ENUM('ongoing', 'closed') DEFAULT 'ongoing',  -- 스터디 상태
     FOREIGN KEY (leader_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL
+
+    -- 시작일이 종료일보다 이전에 있도록 수정
+    CHECK (startDate <= endDate),
+    -- 시작일은 생성일로부터 7일 이내여야 함
+    CHECK (startDate <= DATE_ADD(createdAt, INTERVAL 7 DAY))
 );
 
 
@@ -42,7 +47,7 @@ CREATE TABLE DB2025Team02GroupMembers (
     study_id INT,							-- 가입한 스터디 ID(FK)
     user_id INT,							-- 참여자의 ID(FK)
     accumulated_fine INT DEFAULT 0,			-- 누적된 벌금
-    status ENUM('active', 'suspended', 'withdrawn') DEFAULT 'active',	-- 참여자들의 상태
+    status ENUM('active', 'suspended', 'withdrawn', 'completed') DEFAULT 'active',	-- 참여자들의 상태
     PRIMARY KEY (study_id, user_id),		-- 같은 스터디에 동일한 참여자가 중복 가입을 하지 못하도록 스터디 ID와 유저 ID로 복합 기본키를 생성(PK)
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id),	-- 가입한 스터디 ID 참조하는 외래키
     FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id)				-- 참여자의 ID 참조하는 외래키
@@ -71,6 +76,7 @@ CREATE TABLE DB2025Team02Rules (
     fine_absent INT,						-- 미인증 시 벌금 (보증금 깎을 때는 penalty_absent-penalty_late값으로 처리?)
     ptsettle_cycle INT,						-- 보증금 정산 주기 (예: 7일)
     last_modified DATE,						-- 마지막 규칙 수정일
+    next_cert_date DATE,					-- 다음 인증 날짜 
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)		-- 해당 룰 설립한 스터디 ID를 참조하는 외래키
 );
 
@@ -185,6 +191,34 @@ CREATE EVENT DB2025Team02UpdateStudyStatus
         SET status = 'ongoing'
         WHERE end_date >= CURDATE() AND status != 'ongoing';
     END;
+//
+
+DELIMITER ;
+
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS UpdateNextCertDate;
+
+DELIMITER //
+
+CREATE EVENT UpdateNextCertDate
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+  UPDATE DB2025Team02Rules r
+  JOIN DB2025Team02StudyGroups sg ON r.study_id = sg.study_id
+  SET r.next_cert_date =
+    CASE
+      WHEN CURDATE() <= sg.start_date THEN 
+        DATE_ADD(sg.start_date, INTERVAL r.cert_cycle DAY)
+      ELSE 
+        DATE_ADD(
+          sg.start_date,
+          INTERVAL CEIL(DATEDIFF(CURDATE(), sg.start_date) / r.cert_cycle) * r.cert_cycle DAY
+        )
+    END;
+END;
 //
 
 DELIMITER ;

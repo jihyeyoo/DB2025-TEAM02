@@ -78,7 +78,7 @@ public class MyStudyDetailDAO {
     public RuleDTO getRuleInfo(int studyId) {
         String sql = """
             SELECT cert_deadline, cert_cycle, grace_period,
-                   fine_late, fine_absent, ptsettle_cycle, last_modified
+                   fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date
             FROM db2025team02Rules
             WHERE study_id = ?
         """;
@@ -94,7 +94,8 @@ public class MyStudyDetailDAO {
                     rs.getInt("fine_late"),
                     rs.getInt("fine_absent"),
                     rs.getInt("ptsettle_cycle"),
-                    rs.getDate("last_modified")
+                    rs.getDate("last_modified"),
+                    rs.getDate("next_cert_date")
                 );
             }
         } catch (Exception e) {
@@ -143,6 +144,109 @@ public class MyStudyDetailDAO {
 			e.printStackTrace();
 		}
 		return false;
+	}
+	
+	// 벌금 부과
+	public int imposeFineIfOverdue(int studyId) {
+		int finedCount = 0;
+		
+	    RuleDTO rule = getRuleInfo(studyId);
+	    List<StudyMemberDTO> members = getMemberList(studyId);
+	    DailyCertsDAO certDAO = new DailyCertsDAO();
+
+	    String deductPointSQL = "UPDATE db2025team02Users SET points = points - ? WHERE user_id = ?";
+	    String addFineSQL = "UPDATE db2025team02GroupMembers SET accumulated_fine = accumulated_fine + ? WHERE study_id = ? AND user_id = ?";
+	    String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, is_paid, reason, amount, date) VALUES (?, ?, FALSE, ?, ?, CURDATE())";
+	    String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?";
+	    String suspendUserSQL = "UPDATE db2025team02GroupMembers SET status = 'suspended' WHERE study_id = ? AND user_id = ?";
+
+	    try {
+	        AppMain.conn.setAutoCommit(false); // 트랜잭션 시작
+
+	        java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+
+	        for (StudyMemberDTO member : members) {
+	            int userId = member.getUserId();
+
+	            boolean certified = certDAO.hasCertifiedBeforeDeadline(userId, studyId, rule.getNextCertDate());
+	            if (certified) continue; // 인증했으면 벌금 부과하지 않음
+
+	            // 현재 시간이 마감 시각을 넘었는지 확인
+	            boolean isLate = false;
+	            Time now = new Time(System.currentTimeMillis());
+	            if (now.before(rule.getCertDeadline())) {
+	                continue; // 아직 인증 마감 안 됐으면 벌금 부과 안 함
+	            } else {
+	                isLate = true; // 인증 안 했고, 시간도 넘음 → 벌금 대상
+	            }
+
+	            int fine = isLate ? rule.getFineAbsent() : rule.getFineLate();
+
+	            // 포인트 확인
+	            int userPoints = 0;
+	            try (PreparedStatement checkStmt = AppMain.conn.prepareStatement(checkPointSQL)) {
+	                checkStmt.setInt(1, userId);
+	                ResultSet rs = checkStmt.executeQuery();
+	                if (rs.next()) {
+	                    userPoints = rs.getInt("points");
+	                }
+	            }
+
+	            // 포인트 차감 가능하면 벌금 부과
+	            if (userPoints >= fine) {
+	                try (PreparedStatement deductStmt = AppMain.conn.prepareStatement(deductPointSQL)) {
+	                    deductStmt.setInt(1, fine);
+	                    deductStmt.setInt(2, userId);
+	                    deductStmt.executeUpdate();
+	                }
+
+	                try (PreparedStatement fineStmt = AppMain.conn.prepareStatement(addFineSQL)) {
+	                    fineStmt.setInt(1, fine);
+	                    fineStmt.setInt(2, studyId);
+	                    fineStmt.setInt(3, userId);
+	                    fineStmt.executeUpdate();
+	                }
+
+	                try (PreparedStatement insertStmt = AppMain.conn.prepareStatement(insertFineSQL)) {
+	                    insertStmt.setInt(1, userId);
+	                    insertStmt.setInt(2, studyId);
+	                    insertStmt.setString(3, "미인증");
+	                    insertStmt.setInt(4, fine);
+	                    insertStmt.executeUpdate();
+	                }
+	                
+	               finedCount++;
+
+	            } else {
+	                // 포인트 부족 → 정지 처리
+	                try (PreparedStatement suspendStmt = AppMain.conn.prepareStatement(suspendUserSQL)) {
+	                    suspendStmt.setInt(1, studyId);
+	                    suspendStmt.setInt(2, userId);
+	                    suspendStmt.executeUpdate();
+	                }
+	            }
+	        }
+
+	        AppMain.conn.commit(); // 트랜잭션 커밋
+	        AppMain.conn.setAutoCommit(true);
+	        return finedCount;
+
+	    } catch (Exception e) {
+	        try {
+	            AppMain.conn.rollback();
+	        } catch (SQLException rollbackEx) {
+	            rollbackEx.printStackTrace();
+	        }
+	        e.printStackTrace();
+	    }
+
+	    try {
+	        AppMain.conn.setAutoCommit(true);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return 0;
 	}
 
 

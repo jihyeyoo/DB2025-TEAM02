@@ -187,7 +187,8 @@ public class CreateStudy extends JFrame {
                         Integer.parseInt(fineLateField.getText().trim()),
                         Integer.parseInt(fineAbsentField.getText().trim()),
                         Integer.parseInt(settleCycleField.getText().trim()),
-                        new Date(System.currentTimeMillis())
+                        new Date(System.currentTimeMillis()),
+                        null // next_cert_date는 생성 시점에는 null로 설정 
                 );
 
                 CreateStudyDTO dto = new CreateStudyDTO(name, user.getUserId(), desc,

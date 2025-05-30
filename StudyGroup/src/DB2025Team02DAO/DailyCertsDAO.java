@@ -25,6 +25,29 @@ public class DailyCertsDAO {
 			return false;
 		}
 	}
+	public boolean hasCertifiedBeforeDeadline(int userId, int studyId, Date deadlineDate) {
+	    String sql = """
+	        SELECT COUNT(*) FROM DB2025Team02DailyCerts
+	        WHERE user_id = ? AND study_id = ? AND cert_date <= ?
+	    """;
+
+	    try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+	        stmt.setInt(1, userId);
+	        stmt.setInt(2, studyId);
+	        stmt.setDate(3, deadlineDate);
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt(1) > 0; // 하나라도 있으면 인증한 것으로 간주
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return false;
+	}
+
 
 
 	// 승인된 인증 개수 조회

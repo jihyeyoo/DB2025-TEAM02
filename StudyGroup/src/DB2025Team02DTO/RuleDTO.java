@@ -11,9 +11,10 @@ public class RuleDTO {
     private int fineAbsent;         // 미인증 벌금
     private int ptSettleCycle;      // 보증금 정산 주기
     private Date lastModified;      // 규칙 마지막 수정일
+    private Date nextCertDate;
 
     public RuleDTO(Time certDeadline, int certCycle, int gracePeriod,
-                   int fineLate, int fineAbsent, int ptSettleCycle, Date lastModified) {
+                   int fineLate, int fineAbsent, int ptSettleCycle, Date lastModified, Date nextCertDate) {
         this.certDeadline = certDeadline;
         this.certCycle = certCycle;
         this.gracePeriod = gracePeriod;
@@ -21,6 +22,7 @@ public class RuleDTO {
         this.fineAbsent = fineAbsent;
         this.ptSettleCycle = ptSettleCycle;
         this.lastModified = lastModified;
+        this.nextCertDate = nextCertDate;
     }
 
     public Time getCertDeadline() {
@@ -45,5 +47,9 @@ public class RuleDTO {
 
     public int getPtSettleCycle() {
         return ptSettleCycle;
+    }
+    
+    public Date getNextCertDate() {
+    	return nextCertDate;
     }
 }

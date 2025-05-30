@@ -166,6 +166,34 @@ public class MyStudyDetailPage extends JFrame {
         backButton.setBackground(Color.LIGHT_GRAY);
         backButton.setForeground(Color.BLACK);
         backPanel.add(backButton);
+        
+        // 벌금 부과 버튼
+        if (isLeader) {
+            JButton fineButton = new JButton("💸 벌금 부과");
+            fineButton.setFont(new Font("맑은 고딕", Font.PLAIN, 18));
+            fineButton.setFocusPainted(false);
+            fineButton.setBackground(Color.PINK);
+            fineButton.setForeground(Color.BLACK);
+            
+            fineButton.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "오늘 기준으로 인증하지 않은 사용자에게 벌금을 부과하시겠습니까?",
+                        "벌금 부과 확인", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    int finedCount = dao.imposeFineIfOverdue(studyId);  // DAO 호출
+                    if (finedCount > 0) {
+                        JOptionPane.showMessageDialog(this, finedCount + "명에게 벌금이 부과되었습니다.");
+                        dispose();
+                        new MyStudyDetailPage(studyId, user, previousPage);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "벌금을 부과할 대상자가 없습니다.");
+                    }
+                }
+            });
+
+            backPanel.add(fineButton);
+        }
+        
         bottomPanel.add(backPanel, BorderLayout.SOUTH);
 
         backButton.addActionListener(e -> {
