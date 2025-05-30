@@ -6,6 +6,9 @@ import DB2025Team02DTO.UserDTO;
 import DB2025Team02DTO.RuleDTO;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,35 +157,91 @@ public class MyStudyDetailDAO {
 	    List<StudyMemberDTO> members = getMemberList(studyId);
 	    DailyCertsDAO certDAO = new DailyCertsDAO();
 
+
 	    String deductPointSQL = "UPDATE db2025team02Users SET points = points - ? WHERE user_id = ?";
 	    String addFineSQL = "UPDATE db2025team02GroupMembers SET accumulated_fine = accumulated_fine + ? WHERE study_id = ? AND user_id = ?";
 	    String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, is_paid, reason, amount, date) VALUES (?, ?, FALSE, ?, ?, CURDATE())";
 	    String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?";
 	    String suspendUserSQL = "UPDATE db2025team02GroupMembers SET status = 'suspended' WHERE study_id = ? AND user_id = ?";
+		String checkAlreadyFinedSQL = "SELECT 1 FROM db2025team02Fines WHERE user_id = ? AND study_id = ? AND reason = ? AND date BETWEEN ? AND ?";
 
-	    try {
+		LocalDate nextCert = rule.getNextCertDate().toLocalDate();
+		LocalDate certStart = nextCert.minusDays(rule.getCertCycle());
+		LocalDate certEnd = nextCert.minusDays(1);
+		java.sql.Date certStartDate = java.sql.Date.valueOf(certStart);
+		java.sql.Date certEndDate = java.sql.Date.valueOf(certEnd);
+
+
+
+		try {
 	        AppMain.conn.setAutoCommit(false); // 트랜잭션 시작
 
-	        java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+	        //java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
 
 	        for (StudyMemberDTO member : members) {
+				System.out.println("member: " + member);
 	            int userId = member.getUserId();
 
-	            boolean certified = certDAO.hasCertifiedBeforeDeadline(userId, studyId, rule.getNextCertDate());
-	            if (certified) continue; // 인증했으면 벌금 부과하지 않음
+				LocalDate today = LocalDate.now();
+				LocalDate certDeadline = rule.getNextCertDate().toLocalDate();
+				LocalDate graceDeadline = certDeadline.plusDays(rule.getGracePeriod());
 
-	            // 현재 시간이 마감 시각을 넘었는지 확인
-	            boolean isLate = false;
-	            Time now = new Time(System.currentTimeMillis());
-	            if (now.before(rule.getCertDeadline())) {
-	                continue; // 아직 인증 마감 안 됐으면 벌금 부과 안 함
-	            } else {
-	                isLate = true; // 인증 안 했고, 시간도 넘음 → 벌금 대상
-	            }
+				System.out.println("오늘 날짜: " + today);
+				System.out.println("인증 마감일: " + certDeadline);
+				System.out.println("유예 마감일: " + graceDeadline);
 
-	            int fine = isLate ? rule.getFineAbsent() : rule.getFineLate();
+// 유예일 안 지났으면 아직 벌금 안 부과
+				if (today.isBefore(graceDeadline)) {
+					System.out.println("아직 기한 남음");
+					continue;
+				}
+// 인증 여부 검사
+				boolean hasCertifiedBeforeDeadline = certDAO.hasCertifiedBeforeDeadline(userId, studyId, java.sql.Date.valueOf(certDeadline));
+				boolean hasCertifiedWithinGracePeriod = certDAO.hasCertifiedBeforeDeadline(userId, studyId, java.sql.Date.valueOf(graceDeadline));
 
-	            // 포인트 확인
+				String reason;
+				int fine;
+
+// 조건 분기
+				if (hasCertifiedWithinGracePeriod) {
+					if (!hasCertifiedBeforeDeadline) {
+						reason = "지각";
+						fine = rule.getFineLate();
+						System.out.println("지각 → 벌금 부과");
+					} else {
+						System.out.println("정상 인증 → 패스");
+						continue;
+					}
+				} else {
+					reason = "미인증";
+					fine = rule.getFineAbsent();
+					System.out.println("미인증 → 벌금 부과");
+				}
+
+				System.out.println("미인증 → 벌금 부과 로직 진입");
+
+				try (PreparedStatement checkFinedStmt = AppMain.conn.prepareStatement(checkAlreadyFinedSQL)) {
+					checkFinedStmt.setInt(1, userId);
+					checkFinedStmt.setInt(2, studyId);
+
+					if (reason != null) {
+						checkFinedStmt.setString(3, reason);
+					} else {
+						checkFinedStmt.setNull(3, java.sql.Types.VARCHAR);
+					}
+
+					checkFinedStmt.setDate(4, certStartDate);
+					checkFinedStmt.setDate(5, certEndDate);
+
+					ResultSet rs = checkFinedStmt.executeQuery();
+					if (rs.next()) {
+						System.out.println("이미 벌금 있음 → 스킵");
+						continue;
+					}
+				}
+
+
+				// 포인트 확인
 	            int userPoints = 0;
 	            try (PreparedStatement checkStmt = AppMain.conn.prepareStatement(checkPointSQL)) {
 	                checkStmt.setInt(1, userId);
@@ -210,7 +269,7 @@ public class MyStudyDetailDAO {
 	                try (PreparedStatement insertStmt = AppMain.conn.prepareStatement(insertFineSQL)) {
 	                    insertStmt.setInt(1, userId);
 	                    insertStmt.setInt(2, studyId);
-	                    insertStmt.setString(3, "미인증");
+	                    insertStmt.setString(3, reason);
 	                    insertStmt.setInt(4, fine);
 	                    insertStmt.executeUpdate();
 	                }
