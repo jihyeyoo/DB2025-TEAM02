@@ -2,7 +2,6 @@ package DB2025Team02DAO;
 
 import DB2025Team02DTO.DailyCertsDTO;
 import DB2025Team02main.AppMain;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,7 +100,7 @@ public class DailyCertsDAO {
 	}
 
 	public List<DailyCertsDTO> getCertsByStatus(int studyId, String status) {
-		String sql = "SELECT * FROM DB2025Team02PendingCertifications WHERE study_id = ? AND approval_status = ?";
+		String sql = "SELECT * FROM db2025team02DailyCerts WHERE study_id = ? AND approval_status = ?";
 		List<DailyCertsDTO> list = new ArrayList<>();
 
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
@@ -127,7 +126,7 @@ public class DailyCertsDAO {
 	}
 
 	public boolean updateCertificationStatus(int certId, String status) {
-		String sql = "UPDATE DB2025Team02PendingCertifications SET approval_status = ? WHERE cert_id = ?";
+		String sql = "UPDATE db2025team02DailyCerts SET approval_status = ? WHERE cert_id = ?";
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
 			stmt.setString(1, status);
 			stmt.setInt(2, certId);
