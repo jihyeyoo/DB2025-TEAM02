@@ -1,13 +1,10 @@
 package DB2025Team02main;
 
-<<<<<<< HEAD:StudyGroup/src/main/AppMain.java
 import GUI.Login;
 import java.sql.*;
-=======
 import java.sql.*;
 
 import DB2025Team02GUI.Login;
->>>>>>> bdb813e006aaa6e1725d7fc39feeb230c1585a70:StudyGroup/src/DB2025Team02main/AppMain.java
 
 public class AppMain {
     public static Connection conn;
