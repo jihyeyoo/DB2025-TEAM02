@@ -16,8 +16,8 @@ public class AppMain {
     public static void main(String[] args) {
         String DRIVER = "com.mysql.cj.jdbc.Driver";
         String DBURL = "jdbc:mysql://localhost:3306/db2025team02";
-        String DBID = "root"; // 본인 DB ID
-        String DBPW = "1234"; // 본인 DB PW
+        String DBID = "DB2025Team02"; // 본인 DB ID
+        String DBPW = "DB2025Team02"; // 본인 DB PW
 
         try {
             Class.forName(DRIVER);

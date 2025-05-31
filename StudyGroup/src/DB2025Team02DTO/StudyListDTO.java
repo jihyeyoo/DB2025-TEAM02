@@ -29,5 +29,9 @@ public class StudyListDTO {
     public String getEndDate() { return endDate; }
     public String getCertMethod() { return certMethod; }
     public int getDeposit() { return deposit; }
-    public String getStatus() { return status; }
+    public String getStatus() { return switch (status) {
+        case "ongoing" -> "진행중";
+        case "closed" -> "종료됨";
+        default -> "알 수 없음";
+    }; }
 }

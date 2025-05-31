@@ -1,12 +1,15 @@
 package DB2025Team02GUI;
 
 import javax.swing.*;
+
+import DB2025Team02DAO.MyPageDAO;
 import DB2025Team02DTO.UserDTO;
 import java.awt.*;
 
 public class MyPage extends JFrame {
 
     private JLabel nameLabel, pointLabel;
+    private MyPageDAO myPageDAO = new MyPageDAO();
 
     public MyPage(UserDTO user) {
         setTitle("마이페이지");
@@ -28,7 +31,8 @@ public class MyPage extends JFrame {
         nameLabel.setBounds(350, 110, 300, 30);
         add(nameLabel);
 
-        pointLabel = new JLabel("보유 포인트: " + user.getPoints() + "점", SwingConstants.CENTER);
+        int updatedPoints = myPageDAO.getUserPoints(user.getUserId());
+        pointLabel = new JLabel("보유 포인트: " + updatedPoints + "점", SwingConstants.CENTER);
         pointLabel.setFont(font);
         pointLabel.setBounds(350, 150, 300, 30);
         add(pointLabel);
@@ -74,13 +78,13 @@ public class MyPage extends JFrame {
         });
         
         certButton.addActionListener(e -> {
-            dispose();
-            new MyCertPage(user);
+            setVisible(false); // 현재 창은 숨기고
+            new MyCertPage(user, this);
         });
 
         chargeButton.addActionListener(e -> {
-            dispose();
-            new ChargePoint(user);
+            setVisible(false);
+            new ChargePoint(user, this);
         });
 
         refundButton.addActionListener(e -> new RefundInfo(user));

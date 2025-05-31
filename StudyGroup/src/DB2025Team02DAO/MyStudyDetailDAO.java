@@ -7,8 +7,6 @@ import DB2025Team02DTO.RuleDTO;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,7 +78,7 @@ public class MyStudyDetailDAO {
     // 3. 규칙 정보
     public RuleDTO getRuleInfo(int studyId) {
         String sql = """
-            SELECT cert_deadline, cert_cycle, grace_period,
+            SELECT cert_cycle, grace_period,
                    fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date
             FROM db2025team02Rules
             WHERE study_id = ?
@@ -91,7 +89,6 @@ public class MyStudyDetailDAO {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return new RuleDTO(
-                    rs.getTime("cert_deadline"),
                     rs.getInt("cert_cycle"),
                     rs.getInt("grace_period"),
                     rs.getInt("fine_late"),
@@ -150,9 +147,10 @@ public class MyStudyDetailDAO {
 	}
 	
 	// 벌금 부과
-	public int imposeFineIfOverdue(int studyId) {
+	public String imposeFineIfOverdue(int studyId) {
+		StringBuilder resultMsg = new StringBuilder();
 		int finedCount = 0;
-		
+
 	    RuleDTO rule = getRuleInfo(studyId);
 	    List<StudyMemberDTO> members = getMemberList(studyId);
 	    DailyCertsDAO certDAO = new DailyCertsDAO();
@@ -160,14 +158,18 @@ public class MyStudyDetailDAO {
 
 	    String deductPointSQL = "UPDATE db2025team02Users SET points = points - ? WHERE user_id = ?";
 	    String addFineSQL = "UPDATE db2025team02GroupMembers SET accumulated_fine = accumulated_fine + ? WHERE study_id = ? AND user_id = ?";
-	    String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, is_paid, reason, amount, date) VALUES (?, ?, FALSE, ?, ?, CURDATE())";
-	    String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?";
+		String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, reason, amount, date) VALUES (?, ?,  ?, ?, ?)";
+
+		String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?";
 	    String suspendUserSQL = "UPDATE db2025team02GroupMembers SET status = 'suspended' WHERE study_id = ? AND user_id = ?";
 		String checkAlreadyFinedSQL = "SELECT 1 FROM db2025team02Fines WHERE user_id = ? AND study_id = ? AND reason = ? AND date BETWEEN ? AND ?";
 
-		LocalDate nextCert = rule.getNextCertDate().toLocalDate();
-		LocalDate certStart = nextCert.minusDays(rule.getCertCycle());
-		LocalDate certEnd = nextCert.minusDays(1);
+
+		LocalDate certEnd = rule.getNextCertDate().toLocalDate().minusDays(rule.getCertCycle()); // 기준일에서 한 주 전이 마지막 날
+		LocalDate certStart = certEnd.minusDays(rule.getCertCycle() - 1); // 시작일
+
+		LocalDate graceStart = certEnd.plusDays(1);
+		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
 		java.sql.Date certStartDate = java.sql.Date.valueOf(certStart);
 		java.sql.Date certEndDate = java.sql.Date.valueOf(certEnd);
 
@@ -176,50 +178,37 @@ public class MyStudyDetailDAO {
 		try {
 	        AppMain.conn.setAutoCommit(false); // 트랜잭션 시작
 
-	        //java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+			for (StudyMemberDTO member : members) {
+				int userId = member.getUserId();
+				String userName = member.getUserName();
 
-	        for (StudyMemberDTO member : members) {
-				System.out.println("member: " + member);
-	            int userId = member.getUserId();
+				boolean certifiedOnTime = certDAO.hasPrevWeekCertified(userId, studyId);
+				boolean certifiedInGrace = certDAO.hasPrevWeekCertifiedInGracePeriod(userId, studyId);
 
-				LocalDate today = LocalDate.now();
-				LocalDate certDeadline = rule.getNextCertDate().toLocalDate();
-				LocalDate graceDeadline = certDeadline.plusDays(rule.getGracePeriod());
+				String reason = null;
+				int fine = 0;
 
-				System.out.println("오늘 날짜: " + today);
-				System.out.println("인증 마감일: " + certDeadline);
-				System.out.println("유예 마감일: " + graceDeadline);
+				System.out.println("──────────── 인증 평가 ──────────────");
+				System.out.println("스터디원 ID: " + userId);
+				System.out.println("지난 인증 기간: " + certStartDate + " ~ " + certEndDate);
 
-// 유예일 안 지났으면 아직 벌금 안 부과
-				if (today.isBefore(graceDeadline)) {
-					System.out.println("아직 기한 남음");
+
+				if (certifiedOnTime) {
+					System.out.println("인증 상태: 정상 인증");
 					continue;
-				}
-// 인증 여부 검사
-				boolean hasCertifiedBeforeDeadline = certDAO.hasCertifiedBeforeDeadline(userId, studyId, java.sql.Date.valueOf(certDeadline));
-				boolean hasCertifiedWithinGracePeriod = certDAO.hasCertifiedBeforeDeadline(userId, studyId, java.sql.Date.valueOf(graceDeadline));
-
-				String reason;
-				int fine;
-
-// 조건 분기
-				if (hasCertifiedWithinGracePeriod) {
-					if (!hasCertifiedBeforeDeadline) {
-						reason = "지각";
-						fine = rule.getFineLate();
-						System.out.println("지각 → 벌금 부과");
-					} else {
-						System.out.println("정상 인증 → 패스");
-						continue;
-					}
+				} else if (certifiedInGrace) {
+					reason = "지각";
+					fine = rule.getFineLate();
+					System.out.println("인증 상태: 유예 기간 내 인증 (지각)");
 				} else {
 					reason = "미인증";
 					fine = rule.getFineAbsent();
-					System.out.println("미인증 → 벌금 부과");
+					System.out.println("인증 상태: 인증 미제출");
 				}
 
-				System.out.println("미인증 → 벌금 부과 로직 진입");
-
+				System.out.println("벌금 사유: " + reason);
+				System.out.println("벌금 금액: " + fine);
+				System.out.println("────────────────────────────────────");
 				try (PreparedStatement checkFinedStmt = AppMain.conn.prepareStatement(checkAlreadyFinedSQL)) {
 					checkFinedStmt.setInt(1, userId);
 					checkFinedStmt.setInt(2, studyId);
@@ -271,26 +260,40 @@ public class MyStudyDetailDAO {
 	                    insertStmt.setInt(2, studyId);
 	                    insertStmt.setString(3, reason);
 	                    insertStmt.setInt(4, fine);
+						insertStmt.setDate(5, certEndDate);
 	                    insertStmt.executeUpdate();
 	                }
-	                
-	               finedCount++;
+
+					resultMsg.append("💸 ").append(userName)
+							.append(" (ID ").append(userId).append(") → '")
+							.append(reason).append("' 벌금 ").append(fine).append("원 부과\n");
+
+					finedCount++;
 
 	            } else {
 	                // 포인트 부족 → 정지 처리
-	                try (PreparedStatement suspendStmt = AppMain.conn.prepareStatement(suspendUserSQL)) {
-	                    suspendStmt.setInt(1, studyId);
-	                    suspendStmt.setInt(2, userId);
-	                    suspendStmt.executeUpdate();
-	                }
+					if (!isLeader(userId, studyId)) {
+						try (PreparedStatement suspendStmt = AppMain.conn.prepareStatement(suspendUserSQL)) {
+							suspendStmt.setInt(1, studyId);
+							suspendStmt.setInt(2, userId);
+							suspendStmt.executeUpdate();
+						}
+						resultMsg.append("💀 ").append(userName)
+								.append(" (ID ").append(userId).append(") → 포인트 부족(")
+								.append(userPoints).append("P) → 정지 처리됨\n");
+					} else {
+						resultMsg.append("⚠️ ").append(userName)
+								.append(" (ID ").append(userId).append(") → 포인트 부족하지만 스터디 리더이므로 정지되지 않음\n");
+					}
 	            }
 	        }
 
 	        AppMain.conn.commit(); // 트랜잭션 커밋
 	        AppMain.conn.setAutoCommit(true);
-	        return finedCount;
+			return finedCount > 0 ? resultMsg.toString() : null;
 
-	    } catch (Exception e) {
+
+		} catch (Exception e) {
 	        try {
 	            AppMain.conn.rollback();
 	        } catch (SQLException rollbackEx) {
@@ -305,8 +308,27 @@ public class MyStudyDetailDAO {
 	        e.printStackTrace();
 	    }
 
-	    return 0;
+	    return null;
 	}
+
+	public boolean isLeader(int userId, int studyId) {
+		String sql = """
+        SELECT COUNT(*)
+        FROM db2025team02StudyGroups
+        WHERE study_id = ? AND leader_id = ?
+    """;
+
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			stmt.setInt(1, studyId);
+			stmt.setInt(2, userId);
+			ResultSet rs = stmt.executeQuery();
+			return rs.next() && rs.getInt(1) > 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 
 
 }

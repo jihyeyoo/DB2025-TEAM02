@@ -20,8 +20,8 @@ public class CreateStudyDAO {
         """;
 
         String insertRuleSQL = """
-            INSERT INTO db2025team02Rules (study_id, cert_deadline, cert_cycle, grace_period, fine_late, fine_absent, ptsettle_cycle, last_modified)
-            VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())
+            INSERT INTO db2025team02Rules (study_id,  cert_cycle, grace_period, fine_late, fine_absent, ptsettle_cycle, last_modified)
+            VALUES (?, ?, ?, ?, ?, ?, CURDATE())
         """;
 
         try {
@@ -52,12 +52,11 @@ public class CreateStudyDAO {
                         RuleDTO rule = dto.getRule();
                         try (PreparedStatement ruleStmt = AppMain.conn.prepareStatement(insertRuleSQL)) {
                             ruleStmt.setInt(1, studyId);
-                            ruleStmt.setTime(2, rule.getCertDeadline());
-                            ruleStmt.setInt(3, rule.getCertCycle());
-                            ruleStmt.setInt(4, rule.getGracePeriod());
-                            ruleStmt.setInt(5, rule.getFineLate());
-                            ruleStmt.setInt(6, rule.getFineAbsent());
-                            ruleStmt.setInt(7, rule.getPtSettleCycle());
+                            ruleStmt.setInt(2, rule.getCertCycle());
+                            ruleStmt.setInt(3, rule.getGracePeriod());
+                            ruleStmt.setInt(4, rule.getFineLate());
+                            ruleStmt.setInt(5, rule.getFineAbsent());
+                            ruleStmt.setInt(6, rule.getPtSettleCycle());
                             ruleStmt.executeUpdate();
                         }
 

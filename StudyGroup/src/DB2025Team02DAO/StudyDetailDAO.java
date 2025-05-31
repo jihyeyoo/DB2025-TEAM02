@@ -37,7 +37,7 @@ public class StudyDetailDAO {
 
     public RuleDTO getRuleByStudyId(int studyId) {
         String sql = """
-            SELECT cert_deadline, cert_cycle, grace_period,
+            SELECT cert_cycle, grace_period,
                    fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date
             FROM db2025team02Rules
             WHERE study_id = ?
@@ -49,7 +49,6 @@ public class StudyDetailDAO {
 
             if (rs.next()) {
                 return new RuleDTO(
-                        rs.getTime("cert_deadline"),
                         rs.getInt("cert_cycle"),
                         rs.getInt("grace_period"),
                         rs.getInt("fine_late"),
@@ -69,7 +68,7 @@ public class StudyDetailDAO {
 
 
     public boolean isAlreadyJoined(int studyId, int userId) {
-        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'active'";
+        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'active' or 'suspended'";
 
         try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
             stmt.setInt(1, studyId);
@@ -81,6 +80,21 @@ public class StudyDetailDAO {
             return false;
         }
     }
+
+    public boolean iswWthdrawnUser(int studyId, int userId) {
+        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'withdrawn'";
+
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, studyId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
 
 
@@ -114,6 +128,7 @@ public class StudyDetailDAO {
                 deductStmt.setInt(2, userId);
                 int updated = deductStmt.executeUpdate();
                 if (updated == 0) throw new SQLException("포인트 차감 실패");
+                System.out.println(deductStmt);
             }
 
             // 2. 그룹 멤버 등록
