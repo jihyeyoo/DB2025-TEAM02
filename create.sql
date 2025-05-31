@@ -32,6 +32,11 @@ CREATE TABLE DB2025Team02StudyGroups (
     deposit INT,                                           -- 보증금
     status ENUM('ongoing', 'closed') DEFAULT 'ongoing',  -- 스터디 상태
     FOREIGN KEY (leader_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL
+
+    -- 시작일이 종료일보다 이전에 있도록 수정
+    CHECK (startDate <= endDate),
+    -- 시작일은 생성일로부터 7일 이내여야 함
+    CHECK (startDate <= DATE_ADD(createdAt, INTERVAL 7 DAY))
 );
 
 
@@ -42,7 +47,7 @@ CREATE TABLE DB2025Team02GroupMembers (
     study_id INT,							-- 가입한 스터디 ID(FK)
     user_id INT,							-- 참여자의 ID(FK)
     accumulated_fine INT DEFAULT 0,			-- 누적된 벌금
-    status ENUM('active', 'suspended', 'withdrawn') DEFAULT 'active',	-- 참여자들의 상태
+    status ENUM('active', 'suspended', 'withdrawn', 'completed') DEFAULT 'active',	-- 참여자들의 상태
     PRIMARY KEY (study_id, user_id),		-- 같은 스터디에 동일한 참여자가 중복 가입을 하지 못하도록 스터디 ID와 유저 ID로 복합 기본키를 생성(PK)
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id),	-- 가입한 스터디 ID 참조하는 외래키
     FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id)				-- 참여자의 ID 참조하는 외래키
@@ -164,8 +169,6 @@ FROM DB2025Team02DailyCerts dc
 WHERE
     dc.approval_status = 'pending';
 
-;
-
 
 # 자동으로 StudyGroup 상태 업데이트하는 event scheduler
 
@@ -218,4 +221,4 @@ BEGIN
 END;
 //
 
-DELIMITER ; 
+DELIMITER ;

@@ -2,7 +2,6 @@ package DB2025Team02DAO;
 
 import DB2025Team02DTO.DailyCertsDTO;
 import DB2025Team02main.AppMain;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,7 +137,7 @@ public class DailyCertsDAO {
 		}
 	}
 
-	//인덱스 1번 활용 - 인증 기한 내에 인증 제출을 했으면 제출이 되지 않도록함
+	//인덱스 1번 활용 - 인증 기한 내에 인증 제출을 했으면 제출이 되지 않도록 함
 	public boolean hasCertifiedWithinPeriod(int userId, int studyId, Date startDate, Date endDate) {
 		String sql = """
             SELECT COUNT(*) FROM DB2025Team02DailyCerts
