@@ -24,7 +24,24 @@ public class MyPageDAO {
             return false;
         }
     }
-    
+
+    public int getUserPoints(int userId) {
+        String sql = "SELECT points FROM db2025team02Users WHERE user_id = ?";
+
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("points");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+
     // 환급 정보 가져오는 메서드
     public List<DepositsDTO> getRefundedDepositsByUser(int userId) {
         String sql = "SELECT * FROM db2025team02Deposits WHERE user_id = ? AND is_refunded = TRUE";

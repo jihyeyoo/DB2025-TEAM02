@@ -106,16 +106,24 @@ public class SubmitCert extends JFrame {
 
             // 인증 주기 범위 계산
             LocalDate today = LocalDate.now();
-            LocalDate startDate = today.minusDays(6);
-            java.sql.Date sqlStart = java.sql.Date.valueOf(startDate);
-            java.sql.Date sqlEnd = java.sql.Date.valueOf(today);
+            int currentWeekNo = certDao.calculateWeekNo(selectedStudyId, today);
 
-            // 인덱스 활용해서 중복 인증 여부 검사
-            boolean alreadyCertified = certDao.hasCertifiedWithinPeriod(user.getUserId(), selectedStudyId, sqlStart, sqlEnd);
+            // 이번 주차 인증 중복 여부 확인
+            boolean alreadyCertified = certDao.hasCertifiedWeek(user.getUserId(), selectedStudyId, currentWeekNo);
             if (alreadyCertified) {
-                JOptionPane.showMessageDialog(this, "이미 인증한 기록이 있어요! 인증은 인증 주기 내 한 번만 가능합니다.");
+                JOptionPane.showMessageDialog(this, "이미 이번 주차에 인증한 기록이 있어요!");
                 return;
             }
+
+            // 스터디 시작일 이전인지 확인
+            LocalDate studyStartDate = certDao.getStudyStartDate(selectedStudyId);
+            if (today.isBefore(studyStartDate)) {
+                JOptionPane.showMessageDialog(this, "스터디 시작일 이전에는 인증할 수 없습니다!");
+                return;
+            }
+
+
+
 
             boolean result = certDao.submitCertification(user.getUserId(), selectedStudyId, dateStr, description, "pending");
 

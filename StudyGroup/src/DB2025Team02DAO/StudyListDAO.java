@@ -41,7 +41,7 @@ public class StudyListDAO {
                      "FROM db2025team02StudyGroups WHERE name LIKE ? ORDER BY name ASC";
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
-            ps.setString(1, "%" + keyword + "%");	// 이 부분 파라미터 지정 순서가 틀려서 위로 올려뒀습니다.
+            ps.setString(1, keyword + "%");	// 이 부분 파라미터 지정 순서가 틀려서 위로 올려뒀습니다.
             ResultSet rs = ps.executeQuery(); 
 
           
@@ -115,7 +115,7 @@ public class StudyListDAO {
                      "FROM db2025team02StudyGroups WHERE name LIKE ? ORDER BY " + sortField + " " + sortOrder;
 
         try (PreparedStatement ps = AppMain.conn.prepareStatement(sql)) {
-            ps.setString(1, "%" + keyword + "%");
+            ps.setString(1, keyword + "%");
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {

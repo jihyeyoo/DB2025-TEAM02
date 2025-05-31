@@ -97,6 +97,11 @@ public class StudyDetail extends JFrame {
                     return;
                 }
 
+                if(dao.iswWthdrawnUser(studyId, user.getUserId())) {
+                    JOptionPane.showMessageDialog(this, "탈퇴한 스터디에는 재가입할 수 없습니다");
+                    return;
+                }
+
                 if (!dao.hasEnoughPoints(user.getUserId(), studyId)) {
                     JOptionPane.showMessageDialog(this, "보유 포인트가 부족하여 가입할 수 없습니다.");
                     return;
