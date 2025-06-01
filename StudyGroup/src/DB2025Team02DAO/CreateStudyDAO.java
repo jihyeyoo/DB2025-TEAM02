@@ -8,6 +8,7 @@ import java.sql.*;
 
 public class CreateStudyDAO {
 
+    /*프로그램에서 스터디 정보, 규칙 정보 입력을 받아서 StudyGroup을 만드는 메서드입니다.*/
     public boolean createStudyGroup(CreateStudyDTO dto) {
         String insertGroupSQL = """
             INSERT INTO db2025team02StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit)

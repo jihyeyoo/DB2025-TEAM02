@@ -8,8 +8,9 @@ import java.util.List;
 import DB2025Team02DTO.DepositsDTO;
 import DB2025Team02main.AppMain;
 
-public class MyPageDAO {
+public class ChargePointDAO {
 
+    /* 사용자가 포인트를 충전할 수 있는 메서드입니다. */
     public boolean chargePoints(int userId, int amount) {
         String sql = "UPDATE db2025team02Users SET points = points + ? WHERE user_id = ?";
 
@@ -25,6 +26,7 @@ public class MyPageDAO {
         }
     }
 
+    /*사용자의 현재 포인트를 조회하는 메서드입니다.*/
     public int getUserPoints(int userId) {
         String sql = "SELECT points FROM db2025team02Users WHERE user_id = ?";
 
@@ -42,32 +44,5 @@ public class MyPageDAO {
     }
 
 
-    // 환급 정보 가져오는 메서드
-    public List<DepositsDTO> getRefundedDepositsByUser(int userId) {
-        String sql = "SELECT * FROM db2025team02Deposits WHERE user_id = ? AND is_refunded = TRUE";
-        List<DepositsDTO> refundedDeposits = new ArrayList<>();
-
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    DepositsDTO deposit = new DepositsDTO(
-                        rs.getInt("deposit_id"),
-                        rs.getInt("user_id"),
-                        rs.getInt("study_id"),
-                        rs.getInt("amount"),
-                        rs.getDate("deposit_date"),
-                        rs.getBoolean("is_refunded")
-                    );
-                    refundedDeposits.add(deposit);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return refundedDeposits;
-    }
 
 }

@@ -5,6 +5,7 @@ import DB2025Team02DTO.DepositsDTO;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,44 +13,42 @@ import DB2025Team02main.AppMain;
 
 public class RefundDAO {
 
-    public List<RefundInfoDTO> getRefundInfoList(int userId) {
-        MyPageDAO myPageDAO = new MyPageDAO();
-        DailyCertsDAO certDAO = new DailyCertsDAO();
 
-        List<DepositsDTO> deposits = myPageDAO.getRefundedDepositsByUser(userId);
+    /*사용자의 환급 정보를 가져오는 메서드입니다*/
+    public List<RefundInfoDTO> getRefundInfoList(int userId) {
+        String sql = "SELECT d.amount, d.deposit_date, d.study_id, sg.name AS study_name " +
+                "FROM db2025team02Deposits d " +
+                "JOIN db2025team02StudyGroups sg ON d.study_id = sg.study_id " +
+                "WHERE d.user_id = ? AND d.is_refunded = TRUE";
+
         List<RefundInfoDTO> result = new ArrayList<>();
 
-        for (DepositsDTO d : deposits) {
-            String studyName = getStudyNameById(d.getStudyId());
-            int approvedCount = certDAO.getApprovedCertCount(userId, d.getStudyId());
-            int attendanceRate = approvedCount * 10; // 예: 총 10일 기준
-            int refundAmount = d.getAmount();        // 전액 환급 정책 가정
-            String refundDate = d.getDepositDate().toString();
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
 
-            RefundInfoDTO dto = new RefundInfoDTO(
-                studyName,
-                d.getAmount(),
-                attendanceRate,
-                refundAmount,
-                refundDate
-            );
-            result.add(dto);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String studyName = rs.getString("study_name");
+                    int depositAmount = rs.getInt("amount");
+                    int refundAmount = depositAmount;  // 전액 환급 정책 가정
+                    String refundDate = rs.getDate("deposit_date").toString();
+
+                    RefundInfoDTO dto = new RefundInfoDTO(
+                            studyName,
+                            depositAmount,
+                            refundAmount,
+                            refundDate
+                    );
+
+                    result.add(dto);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return result;
     }
 
-    private String getStudyNameById(int studyId) {
-        String sql = "SELECT name FROM db2025team02StudyGroups WHERE study_id = ?";
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setInt(1, studyId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getString("name");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "(알 수 없음)";
-    }
 }
 

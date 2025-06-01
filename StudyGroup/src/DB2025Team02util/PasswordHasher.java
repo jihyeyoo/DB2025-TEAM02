@@ -4,6 +4,8 @@ import java.security.MessageDigest;
 
 public class PasswordHasher {
 
+
+    /*해시한 패스워드를 저장하기 위한 메서드입니다.*/
     public static String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

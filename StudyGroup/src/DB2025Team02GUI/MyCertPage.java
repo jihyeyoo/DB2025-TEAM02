@@ -1,7 +1,9 @@
 package DB2025Team02GUI;
 
 import DB2025Team02DAO.DailyCertsDAO;
+import DB2025Team02DAO.MyCertDAO;
 import DB2025Team02DAO.MyStudyDAO;
+import DB2025Team02DTO.CertStatusDTO;
 import DB2025Team02DTO.MyStudyDTO;
 import DB2025Team02DTO.RuleDTO;
 import DB2025Team02DTO.UserDTO;
@@ -23,7 +25,7 @@ public class MyCertPage extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        studyList = new MyStudyDAO().getMyStudiesWithCertDate(user);
+        studyList = new MyCertDAO().getMyStudiesWithCertDate(user);
 
         String[] columnNames = {"스터디명", "다음 인증 마감일", "제출 여부", "내 인증 내역"};
         Object[][] data = new Object[studyList.size()][4];
@@ -33,59 +35,12 @@ public class MyCertPage extends JFrame {
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
-
             data[i][0] = dto.getStudyName();
 
-            if (dto.getNextCertDate() != null) {
-                RuleDTO rule = certDao.getRuleInfo(dto.getStudyId());
+            CertStatusDTO certStatus = certDao.getSubmitStatus(user.getUserId(), dto);
+            data[i][1] = certStatus.getDeadlineStr();
+            data[i][2] = certStatus.getSubmitStatus();
 
-                int certCycle = rule.getCertCycle();
-                LocalDate thisCertStart = dto.getNextCertDate().toLocalDate().minusDays(certCycle - 1);
-                int thisWeekNo = certDao.calculateWeekNo(dto.getStudyId(), thisCertStart);
-                int prevWeekNo = thisWeekNo-1;
-
-                boolean hasPrevWeekCert = certDao.hasCertifiedWeek(user.getUserId(), dto.getStudyId(), prevWeekNo);
-                boolean hasThisWeekCert = certDao.hasCertifiedWeek(user.getUserId(), dto.getStudyId(), thisWeekNo);
-                boolean isRejected = certDao.hasRejectedCert(user.getUserId(), dto.getStudyId(), thisWeekNo);
-
-
-                boolean inPrevGrace = certDao.isPrevWeekInGracePeriod(dto.getStudyId());
-
-                System.out.println("=== 제출 여부 판단 ===");
-                System.out.println("studyId: " + dto.getStudyId());
-                System.out.println("thisWeekNo: " + thisWeekNo + ", prevWeekNo: " + prevWeekNo);
-                System.out.println("hasPrevWeekCert: " + hasPrevWeekCert);
-                System.out.println("hasThisWeekCert: " + hasThisWeekCert);
-                System.out.println("inPrevGrace: " + inPrevGrace);
-
-
-                if (prevWeekNo > 1 && !hasPrevWeekCert && inPrevGrace) {
-
-                    LocalDate prevDeadline = dto.getNextCertDate().toLocalDate().minusDays(certCycle);
-                    LocalDate graceStart = prevDeadline.plusDays(1);
-
-                    data[i][1] = graceStart + " (지각)";
-                    data[i][2] = "지난 주차 지각 제출 가능";
-                } else {
-                    // 정상/미제출 판단 (이번 주차 기준)
-                    if (isRejected && !hasThisWeekCert) {
-                        data[i][2] = "반려됨";
-                    } else if (hasThisWeekCert) {
-                        data[i][2] = "정상 제출 완료";
-                    } else {
-                        data[i][2] = "미제출";
-                    }
-
-
-                    String deadlineStr = dto.getNextCertDate().toString();
-                    data[i][1] = deadlineStr;
-                }
-            } else {
-                data[i][2] = "-";
-            }
-
-
-            // [4] 인증 내역 버튼
             data[i][3] = "내역 보기";
         }
 

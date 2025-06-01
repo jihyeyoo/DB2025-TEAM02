@@ -29,7 +29,7 @@ public class MyStudyDetailPage extends JFrame {
         MyStudyDetailDTO summary = dao.getStudySummary(studyId);
         List<StudyMemberDTO> members = dao.getMemberList(studyId);
         RuleDTO rule = dao.getRuleInfo(studyId);
-        boolean isLeader = dao.isLeader(user, studyId);
+        boolean isLeader = dao.isLeader(user.getUserId(), studyId);
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 5)); // 좌측 정렬, 간격 추가
         topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
