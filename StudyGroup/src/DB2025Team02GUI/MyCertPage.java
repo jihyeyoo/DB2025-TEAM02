@@ -1,27 +1,31 @@
 package DB2025Team02GUI;
 
 import DB2025Team02DAO.DailyCertsDAO;
+import DB2025Team02DAO.MyCertDAO;
 import DB2025Team02DAO.MyStudyDAO;
+import DB2025Team02DTO.CertStatusDTO;
 import DB2025Team02DTO.MyStudyDTO;
+import DB2025Team02DTO.RuleDTO;
 import DB2025Team02DTO.UserDTO;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.time.LocalDate;
 import java.util.List;
 
 public class MyCertPage extends JFrame {
 
     private List<MyStudyDTO> studyList;
 
-    public MyCertPage(UserDTO user) {
+    public MyCertPage(UserDTO user, JFrame previousPage) {
         setTitle("스터디 인증 관리");
         setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        studyList = new MyStudyDAO().getMyStudiesWithCertDate(user);
+        studyList = new MyCertDAO().getMyStudiesWithCertDate(user);
 
         String[] columnNames = {"스터디명", "다음 인증 마감일", "제출 여부", "내 인증 내역"};
         Object[][] data = new Object[studyList.size()][4];
@@ -31,36 +35,12 @@ public class MyCertPage extends JFrame {
 
         for (int i = 0; i < studyList.size(); i++) {
             MyStudyDTO dto = studyList.get(i);
-
-            // [1] 스터디명
             data[i][0] = dto.getStudyName();
 
-            // [2] 다음 인증 마감일 (null-safe)
-            String deadlineStr;
-            if (dto.getNextCertDate() != null) {
-                deadlineStr = dto.getNextCertDate().toString();  // yyyy-MM-dd
-                if (dto.getCertDeadline() != null) {
-                    String timeStr = dto.getCertDeadline().toString().substring(0, 5); // HH:mm
-                    deadlineStr += " " + timeStr;
-                }
-            } else {
-                deadlineStr = "미설정";
-            }
-            data[i][1] = deadlineStr;
+            CertStatusDTO certStatus = certDao.getSubmitStatus(user.getUserId(), dto);
+            data[i][1] = certStatus.getDeadlineStr();
+            data[i][2] = certStatus.getSubmitStatus();
 
-            // [3] 제출 여부 (next_cert_date가 있을 때만 확인)
-            if (dto.getNextCertDate() != null) {
-                boolean hasCertified = certDao.hasCertifiedBeforeDeadline(
-                    user.getUserId(),
-                    dto.getStudyId(),
-                    dto.getNextCertDate()
-                );
-                data[i][2] = hasCertified ? "O" : "X";
-            } else {
-                data[i][2] = "-";
-            }
-
-            // [4] 인증 내역 버튼
             data[i][3] = "내역 보기";
         }
 
@@ -103,6 +83,18 @@ public class MyCertPage extends JFrame {
         add(bottomPanel, BorderLayout.SOUTH);
 
         setVisible(true);
+
+        JButton backButton = new JButton("뒤로가기");
+        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 18));
+        backButton.setBackground(Color.GRAY);
+        backButton.setForeground(Color.WHITE);
+        backButton.addActionListener(e -> {
+            dispose(); // 현재 창 닫고
+            if (previousPage != null) previousPage.setVisible(true); // 이전 페이지 다시 보여주기
+        });
+        bottomPanel.add(backButton);
+
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     // "내역 보기" 버튼 렌더러

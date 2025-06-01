@@ -7,6 +7,7 @@ import java.sql.*;
 
 public class StudyDetailDAO {
 
+    /* 내가 가입했거나 가입하지 않은 스터디의 상세 정보를 표시하기 위한 메서드입니다*/
     public StudyDetailDTO getStudyDetail(int studyId) {
         String sql = "SELECT name, description, start_date, end_date, cert_method, deposit, status FROM db2025team02StudyGroups WHERE study_id = ?";
 
@@ -35,9 +36,10 @@ public class StudyDetailDAO {
         return null;
     }
 
+    /* 내가 가입했거나 가입하지 않은 스터디의 규칙 정보를 표시하기 위한 메서드입니다*/
     public RuleDTO getRuleByStudyId(int studyId) {
         String sql = """
-            SELECT cert_deadline, cert_cycle, grace_period,
+            SELECT cert_cycle, grace_period,
                    fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date
             FROM db2025team02Rules
             WHERE study_id = ?
@@ -49,7 +51,6 @@ public class StudyDetailDAO {
 
             if (rs.next()) {
                 return new RuleDTO(
-                        rs.getTime("cert_deadline"),
                         rs.getInt("cert_cycle"),
                         rs.getInt("grace_period"),
                         rs.getInt("fine_late"),
@@ -67,9 +68,24 @@ public class StudyDetailDAO {
         return null;
     }
 
-
+    /* 스터디에 가입하기 버튼을 눌렀을 때 GroupMembers 테이블을 검사하여 이미 가입된 사용자이면 가입을 막아두기 위한 메서드입니다*/
     public boolean isAlreadyJoined(int studyId, int userId) {
-        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'active'";
+        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'active' or 'suspended'";
+
+        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+            stmt.setInt(1, studyId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /* 스터디에 가입하기 버튼을 눌렀을 때 GroupMembers 테이블을 검사하여 탈퇴한 사용자이면 재가입을 막아두기 위한 메서드입니다*/
+    public boolean iswWthdrawnUser(int studyId, int userId) {
+        String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'withdrawn'";
 
         try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
             stmt.setInt(1, studyId);
@@ -83,7 +99,7 @@ public class StudyDetailDAO {
     }
 
 
-
+    /* 스터디에 가입하기 위한 메서드입니다. 사용자의 포인트에서 보증금만큼이 차감되고, GroupMembers에 사용자가 isnert됩니다. 또한 Deposits 테이블에 사용자가 보증금을 낸 기록이 Insert됩니다.*/
     public boolean joinStudy(int studyId, int userId) {
         String deductPointSQL = """
         UPDATE db2025team02Users
@@ -114,6 +130,7 @@ public class StudyDetailDAO {
                 deductStmt.setInt(2, userId);
                 int updated = deductStmt.executeUpdate();
                 if (updated == 0) throw new SQLException("포인트 차감 실패");
+                System.out.println(deductStmt);
             }
 
             // 2. 그룹 멤버 등록
@@ -152,7 +169,7 @@ public class StudyDetailDAO {
         }
     }
 
-
+    /* 스터디에 가입하고자 할 때 만약 스터디의 보증금보다 사용자의 포인트가 적으면 가입할 수 없게 하는 메서드입니다.*/
     public boolean hasEnoughPoints(int userId, int studyId) {
         String sql = """
         SELECT u.points, s.deposit

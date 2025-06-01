@@ -29,7 +29,7 @@ public class MyStudyDetailPage extends JFrame {
         MyStudyDetailDTO summary = dao.getStudySummary(studyId);
         List<StudyMemberDTO> members = dao.getMemberList(studyId);
         RuleDTO rule = dao.getRuleInfo(studyId);
-        boolean isLeader = dao.isLeader(user, studyId);
+        boolean isLeader = dao.isLeader(user.getUserId(), studyId);
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 5)); // 좌측 정렬, 간격 추가
         topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -121,9 +121,6 @@ public class MyStudyDetailPage extends JFrame {
         Font ruleFont = new Font("맑은 고딕", Font.PLAIN, 16);
 
         if (rule != null) {
-            JLabel label1 = new JLabel("인증 마감 시각: " + rule.getCertDeadline());
-            label1.setFont(ruleFont);
-            rulePanel.add(label1);
 
             JLabel label2 = new JLabel("인증 주기: " + rule.getCertCycle() + "일");
             label2.setFont(ruleFont);
@@ -169,7 +166,7 @@ public class MyStudyDetailPage extends JFrame {
         
         // 벌금 부과 버튼
         if (isLeader) {
-            JButton fineButton = new JButton("💸 벌금 부과");
+            JButton fineButton = new JButton("벌금 부과");
             fineButton.setFont(new Font("맑은 고딕", Font.PLAIN, 18));
             fineButton.setFocusPainted(false);
             fineButton.setBackground(Color.PINK);
@@ -177,17 +174,18 @@ public class MyStudyDetailPage extends JFrame {
             
             fineButton.addActionListener(e -> {
                 int confirm = JOptionPane.showConfirmDialog(this,
-                        "오늘 기준으로 인증하지 않은 사용자에게 벌금을 부과하시겠습니까?",
+                        "지난 주차에 인증하지 않은 사용자에게 벌금을 부과하시겠습니까?",
                         "벌금 부과 확인", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    int finedCount = dao.imposeFineIfOverdue(studyId);  // DAO 호출
-                    if (finedCount > 0) {
-                        JOptionPane.showMessageDialog(this, finedCount + "명에게 벌금이 부과되었습니다.");
+                    String result = dao.imposeFineIfOverdue(studyId);
+                    if (result != null) {
+                        JOptionPane.showMessageDialog(this, result);
                         dispose();
                         new MyStudyDetailPage(studyId, user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(this, "벌금을 부과할 대상자가 없습니다.");
                     }
+
                 }
             });
 

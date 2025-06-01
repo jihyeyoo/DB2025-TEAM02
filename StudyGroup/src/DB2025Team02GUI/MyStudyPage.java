@@ -1,5 +1,6 @@
 package DB2025Team02GUI;
 
+import DB2025Team02DAO.MyCertDAO;
 import DB2025Team02DAO.MyStudyDAO;
 import DB2025Team02DAO.StudyEditDAO;
 import DB2025Team02DTO.StudyEditDTO;
@@ -21,7 +22,7 @@ public class MyStudyPage extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
+        List<MyStudyDTO> studyList = new MyCertDAO().getMyStudiesWithCertDate(user);
 
         String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴", "인증 관리"};
         Object[][] data = new Object[studyList.size()][7];

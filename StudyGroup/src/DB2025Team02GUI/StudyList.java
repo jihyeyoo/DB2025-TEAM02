@@ -1,4 +1,5 @@
 package DB2025Team02GUI;
+import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DAO.StudyListDAO;
 import DB2025Team02DTO.StudyListDTO;
 import DB2025Team02DTO.UserDTO;
@@ -45,6 +46,9 @@ public class StudyList extends JFrame {
 
         // 02E. 마이페이지 버튼 클릭 이벤트 - 현재 StudyList창 끄고 MyPage 생성
         myPageBtn.addActionListener(e -> {
+            ChargePointDAO myPageDAO = new ChargePointDAO();
+            int updatedPoints = myPageDAO.getUserPoints(user.getUserId());
+            user.setPoints(updatedPoints);
             dispose();
             new MyPage(user); 								// UserDTO 사용해서 넘겨주기.
         });
@@ -114,17 +118,6 @@ public class StudyList extends JFrame {
             }
         });
 
-        
-        
-        JButton submitCertBtn = new JButton("인증하기");
-        submitCertBtn.setBounds(30, 20, 200, 30);
-        getContentPane().add(submitCertBtn);
-        
-        submitCertBtn.addActionListener(e -> {
-            dispose();
-            new SubmitCert(1, user); 						// UserDTO 사용해서 넘겨주기.
-        });
-        
         
         // 03. DB - 테이블
         String[] columnNames = {"번호", "이름", "시작일", "종료일", "인증방식", "보증금", "스터디ID", "상태"};

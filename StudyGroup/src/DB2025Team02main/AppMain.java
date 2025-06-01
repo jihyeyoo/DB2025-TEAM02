@@ -1,26 +1,36 @@
 package DB2025Team02main;
 
-import GUI.Login;
-import java.sql.*;
-import java.sql.*;
-
 import DB2025Team02GUI.Login;
+import DB2025Team02util.CertDateUpdater;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class AppMain {
     public static Connection conn;
 
     public static void main(String[] args) {
         String DRIVER = "com.mysql.cj.jdbc.Driver";
-        String DBURL = "jdbc:mysql://localhost:3306/DB2025Team02";
-        String DBID = "DB2025Team02";
-        String DBPW = "DB2025Team02";
+        String DBURL = "jdbc:mysql://localhost:3306/db2025team02";
+        String DBID = "DB2025Team02"; // 본인 DB ID
+        String DBPW = "DB2025Team02"; // 본인 DB PW
 
         try {
             Class.forName(DRIVER);
-
             conn = DriverManager.getConnection(DBURL, DBID, DBPW);
             System.out.println("connected");
+
             
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(
+                new CertDateUpdater(conn),
+                1, // delay (초)
+                10, TimeUnit.SECONDS
+            );
+
             new Login();
 
         } catch (ClassNotFoundException e) {

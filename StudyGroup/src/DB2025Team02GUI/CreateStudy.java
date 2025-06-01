@@ -80,13 +80,6 @@ public class CreateStudy extends JFrame {
         depositField.setBounds(320, 420, 400, 30);
         panel.add(depositField);
 
-        JLabel certDeadlineLabel = new JLabel("인증 마감시각 (HH:MM:SS)");
-        certDeadlineLabel.setBounds(150, 470, 200, 30);
-        panel.add(certDeadlineLabel);
-
-        certDeadlineField = new JTextField("23:00:00");
-        certDeadlineField.setBounds(370, 470, 350, 30);
-        panel.add(certDeadlineField);
 
         JLabel certCycleLabel = new JLabel("인증 주기 (일)");
         certCycleLabel.setBounds(150, 510, 200, 30);
@@ -181,7 +174,6 @@ public class CreateStudy extends JFrame {
                 int deposit = Integer.parseInt(depositStr);
 
                 RuleDTO rule = new RuleDTO(
-                        Time.valueOf(certDeadlineField.getText().trim()),
                         Integer.parseInt(certCycleField.getText().trim()),
                         Integer.parseInt(gracePeriodField.getText().trim()),
                         Integer.parseInt(fineLateField.getText().trim()),
