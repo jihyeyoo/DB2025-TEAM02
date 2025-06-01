@@ -2,14 +2,14 @@ package DB2025Team02GUI;
 
 import javax.swing.*;
 
-import DB2025Team02DAO.MyPageDAO;
+import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DTO.UserDTO;
 import java.awt.*;
 
 public class MyPage extends JFrame {
 
     private JLabel nameLabel, pointLabel;
-    private MyPageDAO myPageDAO = new MyPageDAO();
+    private ChargePointDAO myPageDAO = new ChargePointDAO();
 
     public MyPage(UserDTO user) {
         setTitle("마이페이지");

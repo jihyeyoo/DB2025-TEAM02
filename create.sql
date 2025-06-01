@@ -55,7 +55,7 @@ CREATE TABLE DB2025Team02DailyCerts (
     study_id INT,								-- 인증자가 속한 스터디의 ID(FK)
     cert_date DATE,								-- 인증한 날짜
     content TEXT,
-    week_no INT NOT NULL, -- 인증 주차 (스터디 몇주차의 인증인지)
+    cycle_no INT NOT NULL, -- 인증 주차 (스터디 몇주차의 인증인지)
     approval_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id),			-- 인증자의 유저 ID를 참조하는 외래키
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)		-- 인증자가 속한 스터디 ID를 참조하는 외래키
@@ -105,7 +105,7 @@ CREATE TABLE DB2025Team02Deposits (
 
 # 01. DailyCertsDAO에서 사용되는 인덱스
 CREATE INDEX idx_cert_user_study_week_status_date
-    ON DB2025Team02DailyCerts(user_id, study_id, week_no, approval_status, cert_date);
+    ON DB2025Team02DailyCerts(user_id, study_id, cycle_no, approval_status, cert_date);
 
 #2. 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
 CREATE INDEX idx_study_name ON DB2025Team02StudyGroups(name);

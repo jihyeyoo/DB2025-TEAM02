@@ -1,5 +1,5 @@
 package DB2025Team02GUI;
-import DB2025Team02DAO.MyPageDAO;
+import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DAO.StudyListDAO;
 import DB2025Team02DTO.StudyListDTO;
 import DB2025Team02DTO.UserDTO;
@@ -46,7 +46,7 @@ public class StudyList extends JFrame {
 
         // 02E. 마이페이지 버튼 클릭 이벤트 - 현재 StudyList창 끄고 MyPage 생성
         myPageBtn.addActionListener(e -> {
-            MyPageDAO myPageDAO = new MyPageDAO();
+            ChargePointDAO myPageDAO = new ChargePointDAO();
             int updatedPoints = myPageDAO.getUserPoints(user.getUserId());
             user.setPoints(updatedPoints);
             dispose();

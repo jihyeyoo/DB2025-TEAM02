@@ -14,7 +14,7 @@ import DB2025Team02main.AppMain;
 
 public class MyStudyDetailDAO {
 
-    // 1. 스터디 통계 + 기본 정보 (스터디명, 스터디장, 인원수, 총벌금)
+    /*마이 스터디 상세 페이지에서 스터디명, 스터디 총 멤버 수, 총 벌금을 가져오기 위해 db2025team02StudySummary View를 사용합니다.*/
 	public MyStudyDetailDTO getStudySummary(int studyId) {
 		String summarySql = """
         SELECT ss.study_id, ss.study_name,
@@ -43,7 +43,9 @@ public class MyStudyDetailDAO {
 
 
 
-	// 2. 참여자별 정보 (이름, 누적벌금)
+	/* 스터디별로 GroupMembers의 정보를 가져오는 메서드입니다. GroupMembers 테이블에서 누적 벌금을 가져오고,
+	각 GroupMembers의 이름을 조회하기 위해 User테이블을 join하는 쿼리를 사용합니다.
+	 */
 	 public List<StudyMemberDTO> getMemberList(int studyId) {
 	        List<StudyMemberDTO> list = new ArrayList<>();
 	        String sql = """
@@ -75,7 +77,8 @@ public class MyStudyDetailDAO {
 
 		 return list;
 	    }
-    // 3. 규칙 정보
+
+    /* 스터디의 규칙 정보를 가져와 MyStudyDetailPage에 표시하기 위한 메서드입니다.*/
     public RuleDTO getRuleInfo(int studyId) {
         String sql = """
             SELECT cert_cycle, grace_period,
@@ -103,33 +106,15 @@ public class MyStudyDetailDAO {
         }
         return null;
     }
-    
-    public boolean isLeader(UserDTO user, int studyId) {
-        String sql = """
-            SELECT COUNT(*)
-            FROM db2025team02StudyGroups
-            WHERE study_id = ? AND leader_id = ?
-        """;
-
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setInt(1, studyId);
-            stmt.setInt(2, user.getUserId()); 
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next() && rs.getInt(1) > 0) return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
 
-	//강퇴시키기
+	/*다른 사용자를 강퇴시키는 메서드입니다. GropMembers의 상태가 'withdrawn'으로 변경됩니다*/
 	public boolean kickMember(int studyId, int targetUserId) {
 
 		String sql = """
         UPDATE db2025team02GroupMembers
         SET status = 'withdrawn'
-        WHERE study_id = ? AND user_id = ? AND status = 'active'
+        WHERE study_id = ? AND user_id = ? AND status = 'active' or 'suspended'
     """;
 
 		System.out.println("studyId: " + studyId + ", targetUserId: " + targetUserId);
@@ -146,7 +131,22 @@ public class MyStudyDetailDAO {
 		return false;
 	}
 	
-	// 벌금 부과
+	/*특정 스터디 그룹에 대해 벌금을 부과하는 로직을 수행하는 메서드입니다. 다음과 같은 흐름으로 작동합니다.
+	 1. 해당 스터디의 규칙 정보(RuleDTO)를 불러오고, 현재 스터디에 속한 status= 'active'인 멤버들을 조회합니다.
+	 2. 인증 정보를 판별하기 위해 DailyCertsDAO의 hasPrevCycleCertified, hasPrevCycleCertifiedInGracePeriod 함수를 통해 개별 멤버의 지난 주기 인증 상태를 확인합니다.
+	 3. 인증 상태는 1. 지난 주차 인증 기간 내에 정상적으로 인증을 마친 경우, 2. 정상 인증은 하지 않았지만 유예 기간 내 인증을 한 경우,  3.인증도 하지 않았고 유예 기간 내에도 인증 기록이 없는 경우가 있습니다.
+	 4. 아직 지난 주기 유예 기간이 종료되지 않은 경우, 벌금이 부과되지 않습니다.
+	 5. 유예 기간이 종료된 후
+	    인증 상태가 1인 경우 -> 벌금을 부과하지 않고 다음 멤버로 넘어갑니다.
+	    인증 상태가 2인 경우 -> ‘지각’으로 간주하고 fine_late만큼 벌금을 부과합니다.
+	    인증 상태가 3인 경우 -> ‘미제출’로 간주하고 fine_absent만큼 벌금을 부과합니다.
+	 6. 벌금 부과 전에는 동일한 사유로 해당 기간 내에 이미 벌금이 부과된 적이 조회하여 중복 부과를 방지합니다.
+	 7. 벌금 부과 전에 사용자의 point를 조회합니다.
+	    포인트가 벌금 금액보다 많거나 같은 경우 -> 포인트를 차감한 후 GroupMembers 테이블의 accumulated_fine을 갱신하고 Fines 테이블에 벌금 내역을 기록합니다.
+	    포인트가 부족한 경우
+	     1) 사용자가 스터디 리더인 경우 -> 리더인 경우에는 포인트가 부족해도 정지 처리되지 않고 벌금도 부과되지 않습니다. 이는 리더 특권으로 간주되어 예외적으로 처리됩니다.
+	     2) 사용자가 스터디 리더가 아닌 경우 -> 해당 멤버의 GroupMembers 상태를 suspended로 변경하여 활동을 정지시킵니다.
+	*/
 	public String imposeFineIfOverdue(int studyId) {
 		StringBuilder resultMsg = new StringBuilder();
 		int finedCount = 0;
@@ -178,20 +178,26 @@ public class MyStudyDetailDAO {
 		try {
 	        AppMain.conn.setAutoCommit(false); // 트랜잭션 시작
 
+
 			for (StudyMemberDTO member : members) {
 				int userId = member.getUserId();
 				String userName = member.getUserName();
 
-				boolean certifiedOnTime = certDAO.hasPrevWeekCertified(userId, studyId);
-				boolean certifiedInGrace = certDAO.hasPrevWeekCertifiedInGracePeriod(userId, studyId);
+				boolean certifiedOnTime = certDAO.hasPrevCycleCertified(userId, studyId);
+				boolean certifiedInGrace = certDAO.hasPrevCycleCertifiedInGracePeriod(userId, studyId);
 
 				String reason = null;
 				int fine = 0;
-
+//
 				System.out.println("──────────── 인증 평가 ──────────────");
 				System.out.println("스터디원 ID: " + userId);
 				System.out.println("지난 인증 기간: " + certStartDate + " ~ " + certEndDate);
 
+				LocalDate now = LocalDate.now();
+				if (now.isBefore(graceEnd.plusDays(1))) {
+					System.out.println("아직 유예 기간이 지나지 않았음 → 벌금 부과 보류");
+					continue;
+				}
 
 				if (certifiedOnTime) {
 					System.out.println("인증 상태: 정상 인증");
@@ -281,9 +287,12 @@ public class MyStudyDetailDAO {
 						resultMsg.append("💀 ").append(userName)
 								.append(" (ID ").append(userId).append(") → 포인트 부족(")
 								.append(userPoints).append("P) → 정지 처리됨\n");
+
+						finedCount++;
 					} else {
 						resultMsg.append("⚠️ ").append(userName)
 								.append(" (ID ").append(userId).append(") → 포인트 부족하지만 스터디 리더이므로 정지되지 않음\n");
+						finedCount++;
 					}
 	            }
 	        }
@@ -311,6 +320,8 @@ public class MyStudyDetailDAO {
 	    return null;
 	}
 
+	/*사용자가 Leader인지 조회하는 메서드입니다. 만약 Leader인 경우, MyStudyDeatilPage에서 다른 사용자를 강퇴하는 버튼, 벌금을 부과하는 버튼이 활성화됩니다.
+	또한 벌금 부과 함수에서 포인트가 부족해도 Leader인경우 suspend 상태로 변하지 않는 로직을 처리하는데도 사용됩니다.*/
 	public boolean isLeader(int userId, int studyId) {
 		String sql = """
         SELECT COUNT(*)

@@ -7,6 +7,7 @@ import java.sql.*;
 
 public class StudyDetailDAO {
 
+    /* 내가 가입했거나 가입하지 않은 스터디의 상세 정보를 표시하기 위한 메서드입니다*/
     public StudyDetailDTO getStudyDetail(int studyId) {
         String sql = "SELECT name, description, start_date, end_date, cert_method, deposit, status FROM db2025team02StudyGroups WHERE study_id = ?";
 
@@ -35,6 +36,7 @@ public class StudyDetailDAO {
         return null;
     }
 
+    /* 내가 가입했거나 가입하지 않은 스터디의 규칙 정보를 표시하기 위한 메서드입니다*/
     public RuleDTO getRuleByStudyId(int studyId) {
         String sql = """
             SELECT cert_cycle, grace_period,
@@ -66,7 +68,7 @@ public class StudyDetailDAO {
         return null;
     }
 
-
+    /* 스터디에 가입하기 버튼을 눌렀을 때 GroupMembers 테이블을 검사하여 이미 가입된 사용자이면 가입을 막아두기 위한 메서드입니다*/
     public boolean isAlreadyJoined(int studyId, int userId) {
         String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'active' or 'suspended'";
 
@@ -81,6 +83,7 @@ public class StudyDetailDAO {
         }
     }
 
+    /* 스터디에 가입하기 버튼을 눌렀을 때 GroupMembers 테이블을 검사하여 탈퇴한 사용자이면 재가입을 막아두기 위한 메서드입니다*/
     public boolean iswWthdrawnUser(int studyId, int userId) {
         String sql = "SELECT 1 FROM db2025team02GroupMembers WHERE study_id = ? AND user_id = ? AND status = 'withdrawn'";
 
@@ -96,8 +99,7 @@ public class StudyDetailDAO {
     }
 
 
-
-
+    /* 스터디에 가입하기 위한 메서드입니다. 사용자의 포인트에서 보증금만큼이 차감되고, GroupMembers에 사용자가 isnert됩니다. 또한 Deposits 테이블에 사용자가 보증금을 낸 기록이 Insert됩니다.*/
     public boolean joinStudy(int studyId, int userId) {
         String deductPointSQL = """
         UPDATE db2025team02Users
@@ -167,7 +169,7 @@ public class StudyDetailDAO {
         }
     }
 
-
+    /* 스터디에 가입하고자 할 때 만약 스터디의 보증금보다 사용자의 포인트가 적으면 가입할 수 없게 하는 메서드입니다.*/
     public boolean hasEnoughPoints(int userId, int studyId) {
         String sql = """
         SELECT u.points, s.deposit

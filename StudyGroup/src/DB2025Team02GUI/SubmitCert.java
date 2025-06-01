@@ -106,12 +106,12 @@ public class SubmitCert extends JFrame {
 
             // 인증 주기 범위 계산
             LocalDate today = LocalDate.now();
-            int currentWeekNo = certDao.calculateWeekNo(selectedStudyId, today);
+            int currentCycleNo = certDao.calculateCycleNo(selectedStudyId, today);
 
             // 이번 주차 인증 중복 여부 확인
-            boolean alreadyCertified = certDao.hasCertifiedWeek(user.getUserId(), selectedStudyId, currentWeekNo);
+            boolean alreadyCertified = certDao.hasCertifiedCycle(user.getUserId(), selectedStudyId, currentCycleNo);
             if (alreadyCertified) {
-                JOptionPane.showMessageDialog(this, "이미 이번 주차에 인증한 기록이 있어요!");
+                JOptionPane.showMessageDialog(this, "이미 이번 주기에 인증한 기록이 있어요!");
                 return;
             }
 
@@ -120,7 +120,11 @@ public class SubmitCert extends JFrame {
             if (today.isBefore(studyStartDate)) {
                 JOptionPane.showMessageDialog(this, "스터디 시작일 이전에는 인증할 수 없습니다!");
                 return;
+            }else if (today.isEqual(studyStartDate)) {
+                JOptionPane.showMessageDialog(this, "스터디 시작 당일에는 인증할 수 없습니다!");
+                return;
             }
+
 
 
 

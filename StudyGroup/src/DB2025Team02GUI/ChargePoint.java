@@ -2,12 +2,10 @@ package DB2025Team02GUI;
 
 import javax.swing.*;
 
-import DB2025Team02DAO.MyPageDAO;
+import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DTO.UserDTO;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ChargePoint extends JFrame {
 
@@ -72,7 +70,7 @@ public class ChargePoint extends JFrame {
                     return;
                 }
 
-                MyPageDAO dao = new MyPageDAO();
+                ChargePointDAO dao = new ChargePointDAO();
                 boolean success = dao.chargePoints(user.getUserId(), chargeAmount);
 
                 if (success) {
