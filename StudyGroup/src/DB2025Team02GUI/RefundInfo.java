@@ -8,7 +8,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * 환급 정보를 표시하는 화면을 구성하는 클래스입니다.
+ */
 public class RefundInfo extends JFrame {
 
     public RefundInfo(UserDTO user) {

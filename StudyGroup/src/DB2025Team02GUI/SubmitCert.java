@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 스터디 인증 제출을 위한 화면을 구성하는 클래스입니다.
+ */
 public class SubmitCert extends JFrame {
     private JTextArea contentArea;
     private JLabel dateLabel;

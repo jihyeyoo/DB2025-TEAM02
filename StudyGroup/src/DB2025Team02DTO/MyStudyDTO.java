@@ -2,7 +2,9 @@ package DB2025Team02DTO;
 
 import java.sql.Date;
 import java.sql.Time;
-
+/**
+ * 사용자가 참여 중인 스터디 정보를 담는 DTO 클래스입니다.
+ */
 public class MyStudyDTO {
     private int studyId;
     private String studyName;

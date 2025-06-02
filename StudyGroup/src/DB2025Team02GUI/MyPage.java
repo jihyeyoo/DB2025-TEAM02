@@ -3,9 +3,12 @@ package DB2025Team02GUI;
 import javax.swing.*;
 
 import DB2025Team02DAO.ChargePointDAO;
+import DB2025Team02DAO.MyPageDAO;
 import DB2025Team02DTO.UserDTO;
 import java.awt.*;
-
+/**
+ * 마이페이지 화면을 구성하는 클래스입니다.
+ */
 public class MyPage extends JFrame {
 
     private JLabel nameLabel, pointLabel;
@@ -67,9 +70,14 @@ public class MyPage extends JFrame {
         logoutButton.setBounds(380, 510, 220, 50);
         add(logoutButton);
 
+        JButton withDrawButton = new JButton("회원 탈퇴");
+        withDrawButton.setFont(font);
+        withDrawButton.setBounds(380, 570, 220, 50);
+        add(withDrawButton);
+
         studyButton.addActionListener(e -> {
             setVisible(false);
-            new MyStudyPage(user, this);
+            new MyStudy(user, this);
         });
 
         listButton.addActionListener(e -> {
@@ -93,6 +101,41 @@ public class MyPage extends JFrame {
             dispose();
             new Login();
         });
+
+        withDrawButton.addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    null,
+                    "정말 탈퇴하시겠습니까?",
+                    "회원 탈퇴 확인",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                boolean success = MyPageDAO.withdrawUser(user);
+
+                if (success) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "탈퇴가 완료되었습니다.",
+                            "알림",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    Window window = SwingUtilities.getWindowAncestor(withDrawButton);
+                    if (window != null) {
+                        new Login();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "탈퇴 처리 중 오류가 발생했습니다.",
+                            "에러",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+
+            }
+        });
+
 
         setVisible(true);
     }

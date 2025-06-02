@@ -14,7 +14,9 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
-
+/**
+ * 내가 가입한 스터디들의 인증 내역을 관리하는 화면을 구성하는 클래스입니다.
+ */
 public class MyCertPage extends JFrame {
 
     private List<MyStudyDTO> studyList;

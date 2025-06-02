@@ -11,14 +11,16 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
-
-public class MyStudyDetailPage extends JFrame {
+/**
+ * 내가 가입한 스터디를 조회하는 화면에서 내가 가입한 스터디 중 특정 스터디를 선택해 상세 정보를 조회하는 화면을 구성하는 클래스입니다.
+ */
+public class MyStudyDetail extends JFrame {
 
     private MyStudyDetailDAO dao = new MyStudyDetailDAO();
 
     private JFrame previousPage;
 
-    public MyStudyDetailPage(int studyId, UserDTO user, JFrame previousPage) {
+    public MyStudyDetail(int studyId, UserDTO user, JFrame previousPage) {
         this.previousPage = previousPage;
 
         setTitle("📘 마이스터디 상세 페이지");
@@ -84,7 +86,7 @@ public class MyStudyDetailPage extends JFrame {
                             if (success) {
                                 JOptionPane.showMessageDialog(this, m.getUserName() + " 강퇴 완료");
                                 dispose();  // 현재 페이지 닫고
-                                new MyStudyDetailPage(studyId, user, previousPage); // 새로고침
+                                new MyStudyDetail(studyId, user, previousPage); // 새로고침
                             } else {
                                 JOptionPane.showMessageDialog(this, "강퇴 실패. 다시 시도해주세요.");
                             }
@@ -181,7 +183,7 @@ public class MyStudyDetailPage extends JFrame {
                     if (result != null) {
                         JOptionPane.showMessageDialog(this, result);
                         dispose();
-                        new MyStudyDetailPage(studyId, user, previousPage);
+                        new MyStudyDetail(studyId, user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(this, "벌금을 부과할 대상자가 없습니다.");
                     }

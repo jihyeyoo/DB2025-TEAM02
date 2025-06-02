@@ -10,9 +10,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * MyCert 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class MyCertDAO {
 
-    /* 내가 가입한 스터디 목록을 가져오는 함수입니다.  MyCertPage에서 스터디명과 함께
+    /** 내가 가입한 스터디 목록을 가져오는 함수입니다.  MyCertPage에서 스터디명과 함께
     다음 인증 마감일, 인증 날짜, 인증 내용, 승인 여부를 조회하기 위해 CertStatusView를 활용합니다. 또한 MyStudyPage에서 내가 가입한 스터디 목록을 가져오는데 사용됩니다*/
     public List<MyStudyDTO> getMyStudiesWithCertDate(UserDTO user) {
         List<MyStudyDTO> studyList = new ArrayList<>();

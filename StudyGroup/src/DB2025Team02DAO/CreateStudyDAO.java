@@ -5,10 +5,12 @@ import DB2025Team02DTO.RuleDTO;
 import DB2025Team02main.AppMain;
 
 import java.sql.*;
-
+/**
+ * CreateStudy 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class CreateStudyDAO {
 
-    /*프로그램에서 스터디 정보, 규칙 정보 입력을 받아서 StudyGroup을 만드는 메서드입니다.*/
+    /**프로그램에서 스터디 정보, 규칙 정보 입력을 받아서 StudyGroup을 만드는 메서드입니다.*/
     public boolean createStudyGroup(CreateStudyDTO dto) {
         String insertGroupSQL = """
             INSERT INTO db2025team02StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit)

@@ -7,8 +7,10 @@ import DB2025Team02DTO.UserDTO;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Date;
-
-public class EditStudyPage extends JFrame {
+/**
+ * 스터디 정보 수정을 위한 화면을 구성하는 클래스입니다.
+ */
+public class EditStudy extends JFrame {
     private JTextField nameField;
     private JTextArea descriptionArea;
     private JTextField endDateField;  // yyyy-MM-dd
@@ -20,7 +22,7 @@ public class EditStudyPage extends JFrame {
     private UserDTO user;
     private JFrame previousPage;
 
-    public EditStudyPage(StudyEditDTO study, UserDTO user, JFrame previousPage) {
+    public EditStudy(StudyEditDTO study, UserDTO user, JFrame previousPage) {
         this.study = (study != null) ? study : new StudyEditDTO();
         this.user = user;
         this.previousPage = previousPage;

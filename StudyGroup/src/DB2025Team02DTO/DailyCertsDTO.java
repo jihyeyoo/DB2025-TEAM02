@@ -1,7 +1,9 @@
 package DB2025Team02DTO;
 
 import java.util.Date;
-
+/**
+ * 사용자의 개별 인증 기록을 나타내는 DTO 클래스입니다.
+ */
 public class DailyCertsDTO {
     private int certId;
     private int userId;

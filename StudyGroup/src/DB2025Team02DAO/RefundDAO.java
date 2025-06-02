@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import DB2025Team02main.AppMain;
-
+/**
+ * Refundinfo 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class RefundDAO {
 
 
-    /*사용자의 환급 정보를 가져오는 메서드입니다*/
+    /**사용자의 환급 정보를 가져오는 메서드입니다*/
     public List<RefundInfoDTO> getRefundInfoList(int userId) {
         String sql = "SELECT d.amount, d.deposit_date, d.study_id, sg.name AS study_name " +
                 "FROM db2025team02Deposits d " +

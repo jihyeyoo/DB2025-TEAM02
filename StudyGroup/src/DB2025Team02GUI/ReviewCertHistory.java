@@ -11,14 +11,9 @@ import java.awt.*;
 import java.util.List;
 
 
-/*
-
-WHAT: 인증 제출 후 || 마이페이지 - 인증 내역 버튼으로 이어주기. 인증 기록 띄워주는 페이지.
-WHO: 담당자 - 공세영
-TODO: 마이페이지랑 연결하기, 인증 기록 DB랑 연결해서 테이블에 띄워주는 작업까지.
-
-*/
-
+/**
+ * 내 인증내역의 날짜, 내용 , 승인 여부를 조회하는 화면을 구성하는 클래스입니다.
+ */
 
 public class ReviewCertHistory extends JFrame {
     private JTable certTable;

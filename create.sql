@@ -45,12 +45,12 @@ CREATE TABLE DB2025Team02StudyGroups (
 CREATE TABLE DB2025Team02GroupMembers (
 
     study_id INT,							-- 가입한 스터디 ID(FK)
-    user_id INT,							-- 참여자의 ID(FK)
+    user_id INT ,							-- 참여자의 ID(FK)
     accumulated_fine INT DEFAULT 0,			-- 누적된 벌금
     status ENUM('active', 'suspended', 'withdrawn', 'completed') DEFAULT 'active',	-- 참여자들의 상태
     PRIMARY KEY (study_id, user_id),		-- 같은 스터디에 동일한 참여자가 중복 가입을 하지 못하도록 스터디 ID와 유저 ID로 복합 기본키를 생성(PK)
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id),	-- 가입한 스터디 ID 참조하는 외래키
-    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id)				-- 참여자의 ID 참조하는 외래키
+    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id) ON DELETE CASCADE -- 참여자 ID 참조하는 외래키 (참여자 삭제시 해당 스터디 참여 정보도 삭제)
 );
 
 # 04. DailyCerts 테이블 - 인증 내역을 저장 (CertHistory로 이름 바꿔도 괜찮을 듯)
@@ -62,7 +62,7 @@ CREATE TABLE DB2025Team02DailyCerts (
     content TEXT,
     cycle_no INT NOT NULL, -- 인증 주차 (스터디 몇주차의 인증인지)
     approval_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id),			-- 인증자의 유저 ID를 참조하는 외래키
+    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL,			-- 인증자의 유저 ID를 참조하는 외래키
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)		-- 인증자가 속한 스터디 ID를 참조하는 외래키
 );
 
@@ -88,7 +88,7 @@ CREATE TABLE DB2025Team02Fines (
     reason VARCHAR(100),						-- 벌금 사유 (미인증, 지각 등)
     amount INT,									-- 벌금 액수
     date DATE,									-- 벌금이 부과된 인증 주차의 마지막 날
-    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id),	-- 벌금 부과 받은 사용자의 ID 외래키
+    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL,	-- 벌금 부과 받은 사용자의 ID 외래키
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)
 );
 
@@ -100,13 +100,10 @@ CREATE TABLE DB2025Team02Deposits (
     amount INT,									-- 입금한 금액 (구매한 포인트)
     deposit_date DATE,							-- 입금일
     is_refunded BOOLEAN DEFAULT FALSE,			-- 보증금(포인트) 반환 여부
-    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id),			-- 입금한 사용자의 ID 참조하는 외래키
+    FOREIGN KEY (user_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL,			-- 입금한 사용자의 ID 참조하는 외래키
     FOREIGN KEY (study_id) REFERENCES DB2025Team02StudyGroups(study_id)		-- 보증금 낸 스터디 ID 참조하는 외래키
 );
 
-
-
-/* 아래로 인덱스 정의 - 쿼리 쓸 때 편하라고... 이전 그룹들 github 보면서 비슷하게 만들어 봤습니다. 수정 편하게 하세요. */
 
 # 01. DailyCertsDAO에서 사용되는 인덱스
 CREATE INDEX idx_cert_user_study_week_status_date
@@ -161,45 +158,7 @@ FROM db2025team02GroupMembers gm
          LEFT JOIN db2025team02Rules r ON sg.study_id = r.study_id
 WHERE gm.status = 'active' AND sg.status = 'ongoing';
 
-DROP EVENT IF EXISTS DB2025Team02UpdaWteStudyStatus;
-
-DELIMITER //
-
-CREATE EVENT DB2025Team02UpdateStudyStatus
-    ON SCHEDULE EVERY 1 DAY
-        STARTS CURRENT_TIMESTAMP
-    DO
-    BEGIN
-        -- 1. 스터디 종료 처리
-        UPDATE DB2025Team02StudyGroups
-        SET status = 'closed'
-        WHERE end_date < CURDATE() AND status != 'closed';
-
-        -- 2. 스터디 상태 복원 (종료되지 않은 건 ongoing)
-        UPDATE DB2025Team02StudyGroups
-        SET status = 'ongoing'
-        WHERE end_date >= CURDATE() AND status != 'ongoing';
-
-        -- 3. 종료된 스터디 참여자 상태 completed 처리
-        UPDATE DB2025Team02GroupMembers gm
-            JOIN DB2025Team02StudyGroups sg ON gm.study_id = sg.study_id
-        SET gm.status = 'completed'
-        WHERE sg.status = 'closed' AND gm.status = 'active';
-
-        -- 4. 보증금 반환 (포인트 + 보증금 금액, 반환 여부 TRUE 처리)
-        UPDATE DB2025Team02Users u
-            JOIN DB2025Team02Deposits d ON u.user_id = d.user_id
-            JOIN DB2025Team02StudyGroups sg ON d.study_id = sg.study_id
-        SET u.points = u.points + sg.deposit,
-            d.is_refunded = TRUE
-        WHERE sg.status = 'closed' AND d.is_refunded = FALSE;
-
-    END;
-//
-
-DELIMITER ;
-
-/* 인덱스 잘 활용되고 있는지 테스트 - report에 쓰면 좋을듯
+#인덱스 잘 활용되고 있는지 테스트 - report에 쓰면 좋을듯
 
   # 인덱스 1번 -hasPrevWeekCertified()
 
@@ -212,14 +171,14 @@ EXPLAIN SELECT 1
         FROM db2025team02DailyCerts
         WHERE user_id = 1 AND study_id = 3
           AND cert_date BETWEEN '2025-05-27' AND '2025-05-29'
-          AND week_no = 4
+          AND cycle_no = 4
           AND approval_status != 'rejected'
         LIMIT 1;
 
 #인덱스 1번 -hasCertifiedWeek()
 EXPLAIN SELECT COUNT(*)
         FROM db2025team02DailyCerts
-        WHERE user_id = 1 AND study_id = 3 AND week_no = 4;
+        WHERE user_id = 1 AND study_id = 3 AND cycle_no = 4;
 
 
 #인덱스 2번 - 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
@@ -245,5 +204,5 @@ EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, statu
         FROM db2025team02StudyGroups
         WHERE name LIKE '알고리즘%'
         ORDER BY deposit ASC;
-*/
+
 
