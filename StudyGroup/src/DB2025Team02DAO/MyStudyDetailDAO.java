@@ -11,10 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import DB2025Team02main.AppMain;
-
+/**
+ * MyStudyDetail 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class MyStudyDetailDAO {
 
-    /*마이 스터디 상세 페이지에서 스터디명, 스터디 총 멤버 수, 총 벌금을 가져오기 위해 db2025team02StudySummary View를 사용합니다.*/
+    /**마이 스터디 상세 페이지에서 스터디명, 스터디 총 멤버 수, 총 벌금을 가져오기 위해 db2025team02StudySummary View를 사용합니다.*/
 	public MyStudyDetailDTO getStudySummary(int studyId) {
 		String summarySql = """
         SELECT ss.study_id, ss.study_name,
@@ -43,7 +45,7 @@ public class MyStudyDetailDAO {
 
 
 
-	/* 스터디별로 GroupMembers의 정보를 가져오는 메서드입니다. GroupMembers 테이블에서 누적 벌금을 가져오고,
+	/**스터디별로 GroupMembers의 정보를 가져오는 메서드입니다. GroupMembers 테이블에서 누적 벌금을 가져오고,
 	각 GroupMembers의 이름을 조회하기 위해 User테이블을 join하는 쿼리를 사용합니다.
 	 */
 	 public List<StudyMemberDTO> getMemberList(int studyId) {
@@ -78,7 +80,7 @@ public class MyStudyDetailDAO {
 		 return list;
 	    }
 
-    /* 스터디의 규칙 정보를 가져와 MyStudyDetailPage에 표시하기 위한 메서드입니다.*/
+    /** 스터디의 규칙 정보를 가져와 MyStudyDetailPage에 표시하기 위한 메서드입니다.*/
     public RuleDTO getRuleInfo(int studyId) {
         String sql = """
             SELECT cert_cycle, grace_period,
@@ -108,7 +110,7 @@ public class MyStudyDetailDAO {
     }
 
 
-	/*다른 사용자를 강퇴시키는 메서드입니다. GropMembers의 상태가 'withdrawn'으로 변경됩니다*/
+	/**다른 사용자를 강퇴시키는 메서드입니다. GropMembers의 상태가 'withdrawn'으로 변경됩니다*/
 	public boolean kickMember(int studyId, int targetUserId) {
 
 		String sql = """
@@ -131,7 +133,7 @@ public class MyStudyDetailDAO {
 		return false;
 	}
 	
-	/*특정 스터디 그룹에 대해 벌금을 부과하는 로직을 수행하는 메서드입니다. 다음과 같은 흐름으로 작동합니다.
+	/**특정 스터디 그룹에 대해 벌금을 부과하는 로직을 수행하는 메서드입니다. 다음과 같은 흐름으로 작동합니다.
 	 1. 해당 스터디의 규칙 정보(RuleDTO)를 불러오고, 현재 스터디에 속한 status= 'active'인 멤버들을 조회합니다.
 	 2. 인증 정보를 판별하기 위해 DailyCertsDAO의 hasPrevCycleCertified, hasPrevCycleCertifiedInGracePeriod 함수를 통해 개별 멤버의 지난 주기 인증 상태를 확인합니다.
 	 3. 인증 상태는 1. 지난 주차 인증 기간 내에 정상적으로 인증을 마친 경우, 2. 정상 인증은 하지 않았지만 유예 기간 내 인증을 한 경우,  3.인증도 하지 않았고 유예 기간 내에도 인증 기록이 없는 경우가 있습니다.
@@ -320,7 +322,7 @@ public class MyStudyDetailDAO {
 	    return null;
 	}
 
-	/*사용자가 Leader인지 조회하는 메서드입니다. 만약 Leader인 경우, MyStudyDeatilPage에서 다른 사용자를 강퇴하는 버튼, 벌금을 부과하는 버튼이 활성화됩니다.
+	/**사용자가 Leader인지 조회하는 메서드입니다. 만약 Leader인 경우, MyStudyDeatilPage에서 다른 사용자를 강퇴하는 버튼, 벌금을 부과하는 버튼이 활성화됩니다.
 	또한 벌금 부과 함수에서 포인트가 부족해도 Leader인경우 suspend 상태로 변하지 않는 로직을 처리하는데도 사용됩니다.*/
 	public boolean isLeader(int userId, int studyId) {
 		String sql = """

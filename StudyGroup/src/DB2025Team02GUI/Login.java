@@ -7,7 +7,9 @@ import DB2025Team02DAO.LoginDAO;
 import DB2025Team02DTO.LoginResultDTO;
 import DB2025Team02DTO.LoginResultDTO.LoginStatus;
 import DB2025Team02DTO.UserDTO;
-
+/**
+ * 로그인을 위한 화면을 구성하는 클래스입니다.
+ */
 public class Login extends JFrame {
 
     public Login() {

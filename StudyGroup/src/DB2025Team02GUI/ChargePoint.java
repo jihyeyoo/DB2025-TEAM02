@@ -6,7 +6,9 @@ import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DTO.UserDTO;
 
 import java.awt.*;
-
+/**
+ * 포인트 충전을 위한 화면을 구성하는 클래스입니다.
+ */
 public class ChargePoint extends JFrame {
 
     public ChargePoint(UserDTO user, JFrame previousPage) {

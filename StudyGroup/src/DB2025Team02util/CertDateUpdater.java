@@ -3,11 +3,12 @@ package DB2025Team02util;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
+/**
+ * 다음 인증 마감일을 현재 날짜와 스터디의 시작일, 인증 주기를 이용하여 계산해 자동으로 업데이트하는 클래스입니다.
+ */
 public class CertDateUpdater implements Runnable {
     private final Connection conn;
 
-    /*다음 인증 마감일을 현재 날짜와 스터디의 시작일, 인증 주기를 이용하여 계산해 자동으로 업데이트하는 메서드입니다*/
     public CertDateUpdater(Connection conn) {
         this.conn = conn;
     }
@@ -30,6 +31,7 @@ public class CertDateUpdater implements Runnable {
         """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
         } catch (SQLException e) {
             System.err.println("next_cert_date 업데이트 실패:");
             e.printStackTrace();

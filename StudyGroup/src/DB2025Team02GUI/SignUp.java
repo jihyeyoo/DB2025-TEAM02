@@ -4,7 +4,9 @@ import javax.swing.*;
 import DB2025Team02DAO.SignUpDAO;
 
 import java.awt.*;
-
+/**
+ *  회원 가입을 위한 화면을 구성하는 클래스입니다.
+ */
 public class SignUp extends JFrame {
 
     public SignUp() {

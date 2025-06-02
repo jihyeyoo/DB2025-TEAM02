@@ -12,10 +12,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *  ManageCerts 화면에서 사용되며 사용자의 인증 내역을 조회하는 함수들을 포함한 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class DailyCertsDAO {
 
 
-	/*스터디의 시작일을 구하는 메서드입니다. 인증 기한은 스터디 시작 다음날 ~ (스터디 시작일 + 스터디 주기) 까지로 하기 때문에 스터디 시작 당일이나 스터디 시작 전에는 인증을 할 수 없도록 막아둡니다.*/
+	/**스터디의 시작일을 구하는 메서드입니다. 인증 기한은 스터디 시작 다음날 ~ (스터디 시작일 + 스터디 주기) 까지로 하기 때문에 스터디 시작 당일이나 스터디 시작 전에는 인증을 할 수 없도록 막아둡니다.*/
 	public LocalDate getStudyStartDate(int studyId) {
 		String sql = "SELECT start_date FROM db2025team02StudyGroups WHERE study_id = ?";
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
@@ -32,7 +35,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/*사용자가 인증을 제출하는 메서드입니다. calculateCycleNo 함수에 의해 현재 몇 주기인지 계산되고, db2025team02DailyCerts 테이블에 인증 내역이 저장됩니다.*/
+	/**사용자가 인증을 제출하는 메서드입니다. calculateCycleNo 함수에 의해 현재 몇 주기인지 계산되고, db2025team02DailyCerts 테이블에 인증 내역이 저장됩니다.*/
 	public boolean submitCertification(int userId, int studyId, String certDateStr, String content, String approvalStatus) {
 		String sql = "INSERT INTO db2025team02DailyCerts (user_id, study_id, cert_date, content, approval_status, cycle_no) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -82,7 +85,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/*현재 스터디가 몇 주기인지 계산하는 메서드입니다. studyId를 매개변수로 받아 db2025Team02StudyGroups 테이블에서 스터디 시작일을 가져오고,
+	/**현재 스터디가 몇 주기인지 계산하는 메서드입니다. studyId를 매개변수로 받아 db2025Team02StudyGroups 테이블에서 스터디 시작일을 가져오고,
 	해당 스터디를 외래키로 가진 rule 테이블에서 인증 주기를 가져와 현재 스터디가 몇주기인지를 계산합니다.*/
 	public int calculateCycleNo(int studyId, LocalDate certDate) {
 		String sql = """
@@ -122,7 +125,7 @@ public class DailyCertsDAO {
 		return -1; // 조회 실패 시
 	}
 
-	/*인덱스 1번 활용, 이미 해당 주차에 인증한 내역이 있으면 다시 인증을 막아두기 위한 메서드입니다. approval_status가 rejected인 경우는 인증하지 않은 것으로 처리하고, 사용자가 다시 인증을 제출할 수 있도록 합니다. */
+	/** 이미 해당 주차에 인증한 내역이 있으면 다시 인증을 막아두기 위한 메서드입니다. approval_status가 rejected인 경우는 인증하지 않은 것으로 처리하고, 사용자가 다시 인증을 제출할 수 있도록 합니다. */
 	public boolean hasCertifiedCycle(int userId, int studyId, int cycleNo) {
 		String sql = "SELECT COUNT(*) FROM db2025team02DailyCerts WHERE user_id = ? AND study_id = ? AND cycle_no = ? And approval_status != 'rejected'";
 
@@ -141,7 +144,7 @@ public class DailyCertsDAO {
 		return false;
 	}
 
-	/*내 인증 관리 페이지에서 인증의 상태를 조회할 때, 반려된 인증을 조회하기 위한 메서드입니다. 인증이 반려되었으면 '반려됨' 으로 ui에 표시되고, 다시 인증을 제출한 경우 '정상 제출 완료' 로 ui 상태가 바뀝니다. */
+	/**내 인증 관리 페이지에서 인증의 상태를 조회할 때, 반려된 인증을 조회하기 위한 메서드입니다. 인증이 반려되었으면 '반려됨' 으로 ui에 표시되고, 다시 인증을 제출한 경우 '정상 제출 완료' 로 ui 상태가 바뀝니다. */
 	public boolean hasRejectedCert(int userId, int studyId, int cycleNo) {
 		String sql = "SELECT COUNT(*) FROM db2025team02DailyCerts WHERE user_id = ? AND study_id = ? AND cycle_no = ? AND approval_status = 'rejected'";
 
@@ -161,7 +164,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/* 스터디 인증 관리 페이지에서 특정 스터디의 내역 보기를 눌렀을 때 내가 제출한 모든 인증 내역을 조회하는 메서드입니다*/
+	/**스터디 인증 관리 페이지에서 특정 스터디의 내역 보기를 눌렀을 때 내가 제출한 모든 인증 내역을 조회하는 메서드입니다*/
 	public List<DailyCertsDTO> getCertificationsForUser(int studyId, int userId) {
 		String sql = "SELECT * FROM db2025team02DailyCerts WHERE study_id = ? AND user_id = ? ORDER BY cert_date DESC";
 		List<DailyCertsDTO> certs = new ArrayList<>();
@@ -192,7 +195,7 @@ public class DailyCertsDAO {
 		return certs;
 	}
 
-	/* 스터디장의 인증 승인 관리 페이지에서 대기중인 인증, 승인된 인증을 따로 불러올 수 있도록 approval_status 에 따라 인증을 조회하는 메서드입니다*/
+	/**스터디장의 인증 승인 관리 페이지에서 대기중인 인증, 승인된 인증을 따로 불러올 수 있도록 approval_status 에 따라 인증을 조회하는 메서드입니다*/
 	public List<DailyCertsDTO> getCertsByStatus(int studyId, String status) {
 		String sql = "SELECT * FROM db2025team02DailyCerts WHERE study_id = ? AND approval_status = ?";
 		List<DailyCertsDTO> list = new ArrayList<>();
@@ -220,7 +223,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/* 스터디장의 인증 관리 페이지에서 인증을 승인하거나 반려했을 때 해당 인증의 approval_status를 업데이트하는 메서드입니다*/
+	/** 스터디장의 인증 관리 페이지에서 인증을 승인하거나 반려했을 때 해당 인증의 approval_status를 업데이트하는 메서드입니다*/
 	public boolean updateCertificationStatus(int certId, String status) {
 		String sql = "UPDATE db2025team02DailyCerts SET approval_status = ? WHERE cert_id = ?";
 		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
@@ -233,7 +236,7 @@ public class DailyCertsDAO {
 		}
 	}
 
-	/* 스터디의 규칙 정보를 가져오는 메서드입니다, DailyCertsDAO 클래스 내에서 사용됩니다.*/
+	/** 스터디의 규칙 정보를 가져오는 메서드입니다, DailyCertsDAO 클래스 내에서 사용됩니다.*/
 	private RuleDTO getRuleInfo(int studyId) {
 		String sql = """
             SELECT cert_cycle, grace_period,
@@ -262,12 +265,19 @@ public class DailyCertsDAO {
 		return null;
 	}
 
-	/* 인증 제출 상태를 판단하는 메서드입니다. calculateCycleNo 함수로 현재 주기를 계산하고, hasCertifiedCycle 함수로 이번 주기, 지난 주기의 인증 내역이 있는지 검사합니다.
-	1. 이번 주기가 첫 주기인 경우 : 지난 주기를 고려하지 않음
-	2. 이번 주기가 첫 주기가 아님 && 지난 주기 (정규 인증 기간) 내 인증 내역이 없음 && 지난 주기의 유예기간이 아직 지나지 않음 : 지난 주기 지각 제출할 수 있도록 함. 이 때 cycle_no는 지난 주기 기준으로 계산됩니다.
-	3. 이번주차 인증을 했지만 반려되었을 때 : 반려됨으로 표시
-	4. 이번주차 인증을 했지만 반려되었을 때 다시 제출을 했거나, 이번주차 인증을 처음 했을 때 : 정상 제출 완료로 표시 (approve_status는 pending이거나 approved)
-	5. 이번주차 제출 내역이 없을 때 : 미제출로 표시 */
+	/**
+	 * 인증 제출 상태를 판단하는 메서드입니다. calculateCycleNo 함수로 현재 주기를 계산하고,
+	 * hasCertifiedCycle 함수로 이번 주기, 지난 주기의 인증 내역이 있는지 검사합니다.
+	 * 1. 이번 주기가 첫 주기인 경우 : 지난 주기를 고려하지 않음
+	 * 2. 이번 주기가 첫 주기가 아님 and 지난 주기 (정규 인증 기간) 내 인증 내역이 없음 and
+	 *    지난 주기의 유예기간이 아직 지나지 않음 : 지난 주기 지각 제출할 수 있도록 함.
+	 *    이 때 cycle_no는 지난 주기 기준으로 계산됩니다.
+	 * 3. 이번주차 인증을 했지만 반려되었을 때 : 반려됨으로 표시
+	 * 4. 이번주차 인증을 했지만 반려되었을 때 다시 제출을 했거나, 이번주차 인증을 처음 했을 때 :
+	 *    정상 제출 완료로 표시 (approve_status는 pending이거나 approved)
+	 * 5. 이번주차 제출 내역이 없을 때 : 미제출로 표시
+	 */
+
 	public CertStatusDTO getSubmitStatus(int userId, MyStudyDTO dto) {
 		if (dto.getNextCertDate() == null) {
 			return new CertStatusDTO("-", "-");
@@ -304,7 +314,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/* 인덱스 1번활용 - 벌금을 매길 때 지난주기 정규 인증 날짜 안에 제출을 했는지 검사하는 메서드입니다. thisCycleNo가 1보다 작을 때는 지난 주차가 없으므로 검사하지 않습니다. */
+	/**벌금을 매길 때 지난주기 정규 인증 날짜 안에 제출을 했는지 검사하는 메서드입니다. thisCycleNo가 1보다 작을 때는 지난 주차가 없으므로 검사하지 않습니다. */
 	public boolean hasPrevCycleCertified(int userId, int studyId) {
 		RuleDTO rule = getRuleInfo(studyId);  // 스터디의 인증 규칙 정보 가져오기
 
@@ -351,7 +361,7 @@ public class DailyCertsDAO {
 	}
 
 
-	/* 인덱스 1번활용 - 벌금을 매길 때 지난주기 지각 인증 날짜 안에 제출을 했는지 검사하는 메서드입니다.
+	/**벌금을 매길 때 지난주기 지각 인증 날짜 안에 제출을 했는지 검사하는 메서드입니다.
 	위 메서드와 마찬가지로 thisCycleNo가 1보다 작을 때는 지난 주차가 없으므로 검사하지 않습니다. */
 	public boolean hasPrevCycleCertifiedInGracePeriod(int userId, int studyId) {
 
@@ -412,7 +422,7 @@ public class DailyCertsDAO {
 		}
 	}
 
-	/*getSubmitStatus 함수 안에서 inPreveGrace 변수를 계산하기 위한 메서드입니다. 현재 시간과 graceEnd를 비교하여 지난 주차의 유예 기간이 지났는지 검사합니다.*/
+	/**getSubmitStatus 함수 안에서 inPreveGrace 변수를 계산하기 위한 메서드입니다. 현재 시간과 graceEnd를 비교하여 지난 주차의 유예 기간이 지났는지 검사합니다.*/
 	public boolean isPrevCycleInGracePeriod(int studyId) {
 		RuleDTO rule = getRuleInfo(studyId);
 		if (rule == null || rule.getNextCertDate() == null) return false;
