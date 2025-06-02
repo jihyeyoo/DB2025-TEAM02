@@ -7,8 +7,10 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
-
-public class ManageCertsPage extends JFrame {
+/**
+ * 스터디장의 인증 승인 관리를 위한 화면을 구성하는 클래스입니다.
+ */
+public class ManageCerts extends JFrame {
     private JTable table;
     private DefaultTableModel model;
     private DailyCertsDAO dao;
@@ -17,7 +19,7 @@ public class ManageCertsPage extends JFrame {
     private JRadioButton pendingRadio;
     private JRadioButton approvedRadio;
 
-    public ManageCertsPage(int studyId) {
+    public ManageCerts(int studyId) {
         this.studyId = studyId;
         this.dao = new DailyCertsDAO();
 

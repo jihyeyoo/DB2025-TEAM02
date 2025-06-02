@@ -2,7 +2,9 @@ package DB2025Team02DTO;
 
 import java.sql.Date;
 import java.sql.Time;
-
+/**
+ * 스터디별 인증 규칙 및 벌금 정책을 담는 DTO 클래스입니다.
+ */
 public class RuleDTO {
 
     private int certCycle;          // 인증 주기

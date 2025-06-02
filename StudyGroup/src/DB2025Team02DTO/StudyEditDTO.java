@@ -2,6 +2,9 @@ package DB2025Team02DTO;
 
 import java.sql.Date;
 
+/**
+ * 스터디 수정 화면에서 사용되는 DTO 클래스입니다.
+ */
 public class StudyEditDTO {
     private int studyId;
     private String name;

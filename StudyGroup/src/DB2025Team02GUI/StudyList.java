@@ -11,14 +11,9 @@ import java.awt.event.*;
 import java.util.List;
 
 
-/*
-
-WHAT: DB에 저장되어 있는 스터디를 전부 출력하는 페이지 GUI
-WHO: 담당자 - 공세영
-TODO: 
-
-*/
-
+/**
+ * 전체 스터디 목록을 조회하고 스터디를 검색하기 위한 화면을 구성하는 클래스입니다.
+ */
 
 public class StudyList extends JFrame {
     private JTable table;									// 보여주기 위한 컴포넌트 

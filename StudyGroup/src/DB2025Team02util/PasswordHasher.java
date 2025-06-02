@@ -1,11 +1,11 @@
 package DB2025Team02util;
 
 import java.security.MessageDigest;
-
+/**
+ * 사용자에게 입력받은 패스워드를 해시 처리하기 위한 클래스입니다.
+ */
 public class PasswordHasher {
 
-
-    /*해시한 패스워드를 저장하기 위한 메서드입니다.*/
     public static String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

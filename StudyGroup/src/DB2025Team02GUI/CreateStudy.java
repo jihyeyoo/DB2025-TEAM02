@@ -8,7 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.Time;
 import java.sql.Date;
-
+/**
+ * 스터디 생성을 위한 화면을 구성하는 클래스입니다.
+ */
 public class CreateStudy extends JFrame {
     private JTextField nameField, startField, endField, certMethodField, depositField;
     private JTextArea descriptionArea;
