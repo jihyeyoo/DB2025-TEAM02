@@ -116,7 +116,7 @@ public class MyStudyDetailDAO {
 		String sql = """
         UPDATE db2025team02GroupMembers
         SET status = 'withdrawn'
-        WHERE study_id = ? AND user_id = ? AND status = 'active' or 'suspended'
+        WHERE study_id = ? AND user_id = ? AND (status = 'active' or status = 'suspended')
     """;
 
 		System.out.println("studyId: " + studyId + ", targetUserId: " + targetUserId);

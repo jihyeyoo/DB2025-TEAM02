@@ -31,7 +31,7 @@ public class CertDateUpdater implements Runnable {
         """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+            pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("next_cert_date 업데이트 실패:");
             e.printStackTrace();

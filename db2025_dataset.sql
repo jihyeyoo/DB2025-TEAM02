@@ -19,12 +19,12 @@ INSERT INTO DB2025Team02Users (login_id, user_name, password_hash, points) VALUE
 
 -- 스터디 그룹
 INSERT INTO DB2025Team02StudyGroups (name, leader_id, description, start_date, end_date, cert_method, deposit, status) VALUES
-('게임 수학 스터디', 1, '피직스, 기초 수학을 익히자', '2025-04-01', '2025-05-15', '출석 인증', 8000, 'closed'),
+('게임 수학 스터디', 1, '피직스, 기초 수학을 익히자', '2025-04-01', '2025-05-15', '출석 인증', 8000, 'ongoing'),
 ('자료구조 스터디', 1, '자료구조 기본기', '2025-05-10', '2025-06-10', '기록 작성', 9000, 'ongoing'),
 ('네트워크 마스터', 2, 'OSI~TCP 정리', '2025-05-01', '2025-05-30', '출석 인증', 5000, 'ongoing'),
 ('디자인패턴 집중반', 3, 'GoF 학습', '2025-05-28', '2025-06-30', '기록 작성', 5000, 'ongoing'),
 ('알고리즘 입문', 2, '기초 문제풀이', '2025-05-20', '2025-07-10', '사진 인증', 7000, 'ongoing'),
-('SQL 집중반', 3, 'JOIN, INDEX 등 실습', '2025-05-15', '2025-05-29', '기록 작성', 4000, 'closed');
+('SQL 집중반', 3, 'JOIN, INDEX 등 실습', '2025-05-15', '2025-05-29', '기록 작성', 4000, 'ongoing');
 
 -- 스터디 멤버
 INSERT INTO DB2025Team02GroupMembers (study_id, user_id, accumulated_fine, status) VALUES
@@ -49,7 +49,7 @@ INSERT INTO DB2025Team02GroupMembers (study_id, user_id, accumulated_fine, statu
 
 
 -- 인증 내역
-INSERT INTO DB2025Team02DailyCerts (user_id, study_id, cert_date, content, approval_status) VALUES
+INSERT INTO DB2025Team02DailyCerts (user_id, study_id, cert_date,content, approval_status) VALUES
 (5, 1, '2025-05-28', '클래스 정리글 링크 첨부', 'pending'),
 (6, 1, '2025-05-24', '늦었지만 제출합니다.', 'rejected'),
 (7, 1, '2025-05-20', '오늘도 열심히 공부했습니다.', 'pending'),
@@ -94,13 +94,13 @@ INSERT INTO DB2025Team02DailyCerts (user_id, study_id, cert_date, content, appro
 (11, 6, '2025-05-27', '교재 인증.', 'approved');
 
 -- 규칙
-INSERT INTO DB2025Team02Rules (study_id, cert_deadline, cert_cycle, grace_period, fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date) VALUES
-(1, '23:00:00', 3, 1, 1000, 2000, 7, '2025-05-30', '2025-06-02'),
-(2, '23:00:00', 3, 1, 3000, 5000, 7, '2025-05-30', '2025-06-02'),
-(3, '23:00:00', 3, 1, 2000, 4000, 7, '2025-05-30', '2025-06-02'),
-(4, '23:00:00', 3, 1, 5000, 5000, 7, '2025-05-30', '2025-06-02'),
-(5, '23:00:00', 3, 1, 5000, 10000, 7, '2025-05-30', '2025-06-02'),
-(6, '23:00:00', 3, 1, 2000, 5000, 7, '2025-05-30', '2025-06-02');
+INSERT INTO DB2025Team02Rules (study_id, cert_cycle, grace_period, fine_late, fine_absent, ptsettle_cycle, last_modified, next_cert_date) VALUES
+(1, 7, 1, 1000, 2000, 7, '2025-05-30', '2025-06-02'),
+(2, 7, 1, 3000, 5000, 7, '2025-05-30', '2025-06-02'),
+(3,  7, 1, 2000, 4000, 7, '2025-05-30', '2025-06-02'),
+(4,  9, 1, 5000, 5000, 7, '2025-05-30', '2025-06-02'),
+(5,  10, 1, 5000, 10000, 7, '2025-05-30', '2025-06-02'),
+(6,  11, 1, 2000, 5000, 7, '2025-05-30', '2025-06-02');
 
 -- 벌금
 INSERT INTO DB2025Team02Fines (user_id, study_id, is_paid, reason, amount, date) VALUES

@@ -100,21 +100,21 @@ CREATE TABLE DB2025Team02Deposits (
 );
 
 
-# 01. DailyCertsDAO에서 사용되는 인덱스
+#1. DailyCertsDAO에서 사용되는 인덱스
 CREATE INDEX idx_cert_user_study_week_status_date
     ON DB2025Team02DailyCerts(user_id, study_id, cycle_no, approval_status, cert_date);
 
-#2. 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
+#2. 스터디그룹의 이름으로 검색하는데 사용하는 인덱스
 CREATE INDEX idx_study_name ON DB2025Team02StudyGroups(name);
 
-#3. 시작일 인덱스를 만들어서 시작일로 정렬 가능
-CREATE INDEX idx_start_date ON DB2025Team02StudyGroups(start_date);
+#3. 스터디 그룹의 정렬에 사용되는 인덱스
+CREATE INDEX idx_sort_covering
+    ON db2025team02StudyGroups(start_date, study_id, name, end_date, cert_method, deposit, status);
 
-#4. 종료일 인덱스를 만들어서 종료일로 정렬 가능
-CREATE INDEX idx_end_date ON DB2025Team02StudyGroups(end_date);
 
-#5. 보증금 인덱스를 만들어서 보증금으로 정렬 가능
-CREATE INDEX idx_deposit ON DB2025Team02StudyGroups(deposit);
+#4. 반환된 보증금 조회에 사용되는 인덱스
+CREATE INDEX idx_deposit_user_refund
+    ON db2025team02Deposits(user_id, is_refunded);
 
 
 /* 아래로 뷰 정의 */
@@ -173,29 +173,42 @@ EXPLAIN SELECT COUNT(*)
         WHERE user_id = 1 AND study_id = 3 AND cycle_no = 4;
 
 
-#인덱스 2번 - 스터디그룹의 이름 인덱스를 만들어서 이름으로 서치가 가능
+#인덱스 2
 EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, status
         FROM db2025team02StudyGroups
         WHERE name LIKE '스터디%'
         ORDER BY name ASC;
 #3
-EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, status
+EXPLAIN SELECT start_date, study_id, name,  end_date, cert_method, deposit, status
         FROM db2025team02StudyGroups
         ORDER BY start_date ASC;
-#4
+#3
 EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, status
         FROM db2025team02StudyGroups
         ORDER BY end_date DESC;
-#5
+#3
 EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, status
         FROM db2025team02StudyGroups
         ORDER BY deposit DESC;
 
-#2,5
+#2
 EXPLAIN SELECT study_id, name, start_date, end_date, cert_method, deposit, status
         FROM db2025team02StudyGroups
         WHERE name LIKE '알고리즘%'
         ORDER BY deposit ASC;
+#4
+EXPLAIN
+SELECT d.amount, d.deposit_date, d.study_id, sg.name AS study_name
+FROM db2025team02Deposits d
+         JOIN db2025team02StudyGroups sg ON d.study_id = sg.study_id
+WHERE d.user_id = 3 AND d.is_refunded = TRUE;
+
+
+
+
+
+
+
 
 
 
