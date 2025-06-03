@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import DB2025Team02DTO.UserDTO;
 import DB2025Team02GUI.Login;
 import DB2025Team02util.CertDateUpdater;
 import DB2025Team02util.StudyStatusUpdater;
@@ -19,6 +20,7 @@ import DB2025Team02util.StudyStatusUpdater;
  */
 public class AppMain {
     public static Connection conn;
+    public static UserDTO currentUser;
 
     public static void main(String[] args) {
         String DRIVER = "com.mysql.cj.jdbc.Driver";
