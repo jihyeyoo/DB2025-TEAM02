@@ -272,8 +272,7 @@ public class MyStudyDetailDAO {
 	                    insertStmt.executeUpdate();
 	                }
 
-					resultMsg.append("💸 ").append(userName)
-							.append(" (ID ").append(userId).append(") → '")
+					resultMsg.append(userName).append(" → '")
 							.append(reason).append("' 벌금 ").append(fine).append("원 부과\n");
 
 					finedCount++;
@@ -286,14 +285,13 @@ public class MyStudyDetailDAO {
 							suspendStmt.setInt(2, userId);
 							suspendStmt.executeUpdate();
 						}
-						resultMsg.append("💀 ").append(userName)
-								.append(" (ID ").append(userId).append(") → 포인트 부족(")
+						resultMsg.append(userName).append(" → 포인트 부족(")
 								.append(userPoints).append("P) → 정지 처리됨\n");
 
 						finedCount++;
 					} else {
-						resultMsg.append("⚠️ ").append(userName)
-								.append(" (ID ").append(userId).append(") → 포인트 부족하지만 스터디 리더이므로 정지되지 않음\n");
+						resultMsg.append(userName)
+								.append(" → 포인트 부족하지만 스터디 리더이므로 정지되지 않음\n");
 						finedCount++;
 					}
 	            }

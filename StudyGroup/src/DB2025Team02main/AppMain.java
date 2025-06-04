@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import DB2025Team02DAO.DailyCertsDAO;
 import DB2025Team02DTO.UserDTO;
 import DB2025Team02GUI.Login;
 import DB2025Team02util.CertDateUpdater;
@@ -28,6 +29,8 @@ public class AppMain {
         String DBID = "DB2025Team02";
         String DBPW = "DB2025Team02";
 
+
+
         try {
             Class.forName(DRIVER);
             conn = DriverManager.getConnection(DBURL, DBID, DBPW);
@@ -47,7 +50,8 @@ public class AppMain {
                     10, TimeUnit.SECONDS
             );
 
-
+            DailyCertsDAO dao = new DailyCertsDAO();
+            dao.updateMissingCycleNos();
             new Login();
 
         } catch (ClassNotFoundException e) {

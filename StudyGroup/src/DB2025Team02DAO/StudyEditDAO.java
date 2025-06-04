@@ -10,7 +10,7 @@ import java.sql.*;
  */
 public class StudyEditDAO {
 
-    /**스터디 정보를 수정하기 위한 메서드입니다. 스터디 이름, 설명, 인증 방법, 종료일, 인증 주기를 수정할 수 있습니다.*/
+    /**스터디 정보를 수정하기 위한 메서드입니다. 스터디 이름, 설명, 인증 방법, 종료일, 정산 주기를 수정할 수 있습니다.*/
     public boolean updateStudyInfo(StudyEditDTO dto) {
         String updateStudySql = "UPDATE db2025team02StudyGroups SET name=?, description=?, end_date=?, cert_method=? WHERE study_id=?";
         String updateRulesSql = "UPDATE db2025team02Rules SET ptsettle_cycle=?, last_modified=CURDATE() WHERE study_id=?";

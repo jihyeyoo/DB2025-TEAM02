@@ -106,22 +106,15 @@ public class DailyCertsDAO {
 
 					// 첫 주차 보정: certDate가 startDate로부터 certCycle일 미만일 경우 무조건 week 1
 					if (daysBetween < certCycle) {
-						System.out.println("[calculateCycleNo] 첫 주차: resultCycle = 1");
 						return 1;
 					}
-
 					int resultCycle = (int) Math.ceil((daysBetween + 1) / (double) certCycle);
-					System.out.println("[calculateCycleNo] resultCycle: " + resultCycle);
 					return resultCycle;
-				} else {
-					System.out.println("[calculateCycleNo] No rule/study found for studyId=" + studyId);
 				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("[calculateCycleNo] SQL error for studyId=" + studyId);
 		}
-
 		return -1; // 조회 실패 시
 	}
 
@@ -328,11 +321,6 @@ public class DailyCertsDAO {
 		}
 		LocalDate certEnd = rule.getNextCertDate().toLocalDate().minusDays(rule.getCertCycle()); // 기준일에서 한 주 전이 마지막 날
 		LocalDate certStart = certEnd.minusDays(rule.getCertCycle() - 1); // 시작일
-
-		LocalDate graceStart = certEnd.plusDays(1);
-		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
-
-
 		java.sql.Date certStartDate = java.sql.Date.valueOf(certStart);
 		java.sql.Date certEndDate = java.sql.Date.valueOf(certEnd);
 
@@ -389,8 +377,8 @@ public class DailyCertsDAO {
 		System.out.println("▶ userId: " + userId + ", studyId: " + studyId);
 		System.out.println("▶ certCycle: " + certCycle + ", gracePeriod: " + rule.getGracePeriod());
 		System.out.println("▶ thisCycleNo: " + thisCycleNo + ", lastCycleNo: " + lastCycleNo);
-		System.out.println("▶ lastCycleEnd: " + lastCycleEnd);
-		System.out.println("▶ graceStart: " + graceStart + ", graceEnd: " + graceEnd);
+	System.out.println("▶ lastCycleEnd: " + lastCycleEnd);
+	System.out.println("▶ graceStart: " + graceStart + ", graceEnd: " + graceEnd);
 
 		String sql = """
         SELECT 1 FROM db2025team02DailyCerts
@@ -435,6 +423,49 @@ public class DailyCertsDAO {
 		LocalDate today = LocalDate.now();
 		return !today.isBefore(graceStart) && !today.isAfter(graceEnd);
 	}
+
+	/** cycle_no가 null인 데이터들에 대해 cycle_no를 계산해서 적절히 insert해주는 역할을 하는 함수입니다.
+	 * 프로그램을 시작할 때 appMain에서 한 번 호출됩니다.*/
+	public void updateMissingCycleNos() {
+		String selectSql = """
+        SELECT user_id, study_id, cert_date 
+        FROM DB2025Team02DailyCerts 
+        WHERE cycle_no IS NULL
+    """;
+
+		String updateSql = """
+        UPDATE DB2025Team02DailyCerts 
+        SET cycle_no = ? 
+        WHERE user_id = ? AND study_id = ? AND cert_date = ?
+    """;
+
+		try (
+				PreparedStatement selectStmt = AppMain.conn.prepareStatement(selectSql);
+				ResultSet rs = selectStmt.executeQuery()
+		) {
+			while (rs.next()) {
+				int userId = rs.getInt("user_id");
+				int studyId = rs.getInt("study_id");
+				LocalDate certDate = rs.getDate("cert_date").toLocalDate();
+
+				int cycleNo = calculateCycleNo(studyId, certDate);
+				if (cycleNo != -1) {
+					try (PreparedStatement updateStmt = AppMain.conn.prepareStatement(updateSql)) {
+						updateStmt.setInt(1, cycleNo);
+						updateStmt.setInt(2, userId);
+						updateStmt.setInt(3, studyId);
+						updateStmt.setDate(4, Date.valueOf(certDate));
+						updateStmt.executeUpdate();
+
+					}
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 
 
 
