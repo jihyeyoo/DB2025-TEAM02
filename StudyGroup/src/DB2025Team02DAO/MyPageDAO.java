@@ -1,56 +1,65 @@
 package DB2025Team02DAO;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-
-import DB2025Team02DTO.DepositsDTO;
+import DB2025Team02DTO.UserDTO;
 import DB2025Team02main.AppMain;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+/**
+ * MyPage 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class MyPageDAO {
 
-    public boolean chargePoints(int userId, int amount) {
-        String sql = "UPDATE db2025team02Users SET points = points + ? WHERE user_id = ?";
+    /**회원 탈퇴하는 메서드입니다. 본인이 스터디장인 스터디가 있다면 해당 스터디들을 StudyGroups.status = 'closed'로 변경한 이후 해당 User를 Users테이블에서 삭제합니다. */
+    public static boolean withdrawUser(UserDTO user) {
+        String findLeaderStudiesSql = "SELECT study_id FROM db2025team02StudyGroups WHERE leader_id = ?";
+        String closeStudySql = "UPDATE db2025team02StudyGroups SET status = 'closed' WHERE study_id = ?";
+        String deleteUserSql = "DELETE FROM db2025team02Users WHERE user_id = ?";
 
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setInt(1, amount);
-            stmt.setInt(2, userId);
+        try {
+            AppMain.conn.setAutoCommit(false);
 
-            int result = stmt.executeUpdate();
-            return result == 1;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
-    // 환급 정보 가져오는 메서드
-    public List<DepositsDTO> getRefundedDepositsByUser(int userId) {
-        String sql = "SELECT * FROM db2025team02Deposits WHERE user_id = ? AND is_refunded = TRUE";
-        List<DepositsDTO> refundedDeposits = new ArrayList<>();
-
-        try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
+            try (PreparedStatement findStmt = AppMain.conn.prepareStatement(findLeaderStudiesSql)) {
+                findStmt.setInt(1, user.getUserId());
+                ResultSet rs = findStmt.executeQuery();
                 while (rs.next()) {
-                    DepositsDTO deposit = new DepositsDTO(
-                        rs.getInt("deposit_id"),
-                        rs.getInt("user_id"),
-                        rs.getInt("study_id"),
-                        rs.getInt("amount"),
-                        rs.getDate("deposit_date"),
-                        rs.getBoolean("is_refunded")
-                    );
-                    refundedDeposits.add(deposit);
+                    int studyId = rs.getInt("study_id");
+                    try (PreparedStatement closeStmt = AppMain.conn.prepareStatement(closeStudySql)) {
+                        closeStmt.setInt(1, studyId);
+                        closeStmt.executeUpdate();
+                    }
                 }
             }
+
+            try (PreparedStatement deleteStmt = AppMain.conn.prepareStatement(deleteUserSql)) {
+                deleteStmt.setInt(1, user.getUserId());
+                int deleted = deleteStmt.executeUpdate();
+                if (deleted == 0) {
+                    AppMain.conn.rollback();
+                    return false;
+                }
+            }
+
+            AppMain.conn.commit();
+            return true;
+
         } catch (Exception e) {
             e.printStackTrace();
+            try {
+                AppMain.conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            return false;
+        } finally {
+            try {
+                AppMain.conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-
-        return refundedDeposits;
     }
+
 
 }

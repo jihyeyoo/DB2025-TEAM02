@@ -1,5 +1,6 @@
 package DB2025Team02GUI;
 
+import DB2025Team02DAO.MyCertDAO;
 import DB2025Team02DAO.MyStudyDAO;
 import DB2025Team02DAO.StudyEditDAO;
 import DB2025Team02DTO.StudyEditDTO;
@@ -10,18 +11,20 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
-
-public class MyStudyPage extends JFrame {
+/**
+ * 내가 가입한 스터디들을 조회하는 화면을 구성하는 클래스입니다.
+ */
+public class MyStudy extends JFrame {
     private JFrame previousPage;
 
-    public MyStudyPage(UserDTO user, JFrame previousPage) {
+    public MyStudy(UserDTO user, JFrame previousPage) {
         this.previousPage = previousPage;
         setTitle("자기 스터디 조회 페이지");
         setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        List<MyStudyDTO> studyList = new MyStudyDAO().getMyStudies(user);
+        List<MyStudyDTO> studyList = new MyCertDAO().getMyStudiesWithCertDate(user);
 
         String[] columnNames = {"스터디명", "스터디장", "시작일", "정보", "수정", "탈퇴", "인증 관리"};
         Object[][] data = new Object[studyList.size()][7];
@@ -111,7 +114,7 @@ public class MyStudyPage extends JFrame {
         }
 
         public Object getCellEditorValue() {
-            if (clicked) new ManageCertsPage(list.get(currentRow).getStudyId());
+            if (clicked) new ManageCerts(list.get(currentRow).getStudyId());
             clicked = false;
             return "인증 관리";
         }
@@ -168,7 +171,7 @@ public class MyStudyPage extends JFrame {
                 MyStudyDTO selected = list.get(currentRow);
                 JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
                 currentFrame.dispose();
-                new MyStudyDetailPage(selected.getStudyId(), user, currentFrame);
+                new MyStudyDetail(selected.getStudyId(), user, currentFrame);
             }
             clicked = false;
             return "정보 보기";
@@ -219,7 +222,7 @@ public class MyStudyPage extends JFrame {
                         JOptionPane.showMessageDialog(button, "탈퇴가 완료되었습니다." + (isLeader ? " 스터디가 종료되었습니다." : ""));
                         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
                         currentFrame.dispose();
-                        new MyStudyPage(user, previousPage);
+                        new MyStudy(user, previousPage);
                     } else {
                         JOptionPane.showMessageDialog(button, "탈퇴에 실패했습니다.");
                     }
@@ -270,7 +273,7 @@ public class MyStudyPage extends JFrame {
                 if (selected.getLeaderId() == user.getUserId()) {
                     StudyEditDTO dto = new StudyEditDAO().getStudyById(selected.getStudyId());
                     JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(button);
-                    new EditStudyPage(dto, user, currentFrame);
+                    new EditStudy(dto, user, currentFrame);
                 }
             }
             clicked = false;

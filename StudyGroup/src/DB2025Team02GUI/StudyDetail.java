@@ -6,13 +6,9 @@ import javax.swing.*;
 import java.awt.*;
 
 
-/*
-
-WHAT: 스터디목록에서 선택한 스터디의 세부 정보를 띄워주는 페이지 GUI
-WHO: 담당자 - 공세영
-TODO:
-
-*/
+/**
+ *  전체 스터디 목록에서 선택한 스터디의 세부 정보를 표시하는 화면을 구성하는 클래스입니다.
+ */
 
 
 public class StudyDetail extends JFrame {
@@ -94,6 +90,11 @@ public class StudyDetail extends JFrame {
             if (confirm == JOptionPane.YES_OPTION) {
                 if (dao.isAlreadyJoined(studyId, user.getUserId())) {
                     JOptionPane.showMessageDialog(this, "이미 해당 스터디에 가입되어 있습니다.");
+                    return;
+                }
+
+                if(dao.iswWthdrawnUser(studyId, user.getUserId())) {
+                    JOptionPane.showMessageDialog(this, "탈퇴한 스터디에는 재가입할 수 없습니다");
                     return;
                 }
 

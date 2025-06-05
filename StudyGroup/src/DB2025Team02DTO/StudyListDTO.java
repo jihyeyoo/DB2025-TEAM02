@@ -1,7 +1,7 @@
 package DB2025Team02DTO;
 
 /**
- * StudyList 화면에서 필요한 스터디 기본 정보를 담는 DTO 클래스
+ * StudyList 화면에서 사용되는 DTO 클래스입니다.
  */
 public class StudyListDTO {
     private int studyId;
@@ -29,5 +29,9 @@ public class StudyListDTO {
     public String getEndDate() { return endDate; }
     public String getCertMethod() { return certMethod; }
     public int getDeposit() { return deposit; }
-    public String getStatus() { return status; }
+    public String getStatus() { return switch (status) {
+        case "ongoing" -> "진행중";
+        case "closed" -> "종료됨";
+        default -> "알 수 없음";
+    }; }
 }

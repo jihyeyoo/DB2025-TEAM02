@@ -8,7 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.Time;
 import java.sql.Date;
-
+/**
+ * 스터디 생성을 위한 화면을 구성하는 클래스입니다.
+ */
 public class CreateStudy extends JFrame {
     private JTextField nameField, startField, endField, certMethodField, depositField;
     private JTextArea descriptionArea;
@@ -80,13 +82,6 @@ public class CreateStudy extends JFrame {
         depositField.setBounds(320, 420, 400, 30);
         panel.add(depositField);
 
-        JLabel certDeadlineLabel = new JLabel("인증 마감시각 (HH:MM:SS)");
-        certDeadlineLabel.setBounds(150, 470, 200, 30);
-        panel.add(certDeadlineLabel);
-
-        certDeadlineField = new JTextField("23:00:00");
-        certDeadlineField.setBounds(370, 470, 350, 30);
-        panel.add(certDeadlineField);
 
         JLabel certCycleLabel = new JLabel("인증 주기 (일)");
         certCycleLabel.setBounds(150, 510, 200, 30);
@@ -181,13 +176,13 @@ public class CreateStudy extends JFrame {
                 int deposit = Integer.parseInt(depositStr);
 
                 RuleDTO rule = new RuleDTO(
-                        Time.valueOf(certDeadlineField.getText().trim()),
                         Integer.parseInt(certCycleField.getText().trim()),
                         Integer.parseInt(gracePeriodField.getText().trim()),
                         Integer.parseInt(fineLateField.getText().trim()),
                         Integer.parseInt(fineAbsentField.getText().trim()),
                         Integer.parseInt(settleCycleField.getText().trim()),
-                        new Date(System.currentTimeMillis())
+                        new Date(System.currentTimeMillis()),
+                        null // next_cert_date는 생성 시점에는 null로 설정 
                 );
 
                 CreateStudyDTO dto = new CreateStudyDTO(name, user.getUserId(), desc,

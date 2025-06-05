@@ -8,7 +8,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * 환급 정보를 표시하는 화면을 구성하는 클래스입니다.
+ */
 public class RefundInfo extends JFrame {
 
     public RefundInfo(UserDTO user) {
@@ -22,7 +24,7 @@ public class RefundInfo extends JFrame {
         titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 20));
         add(titleLabel, BorderLayout.NORTH);
 
-        String[] columnNames = {"스터디명", "보증금", "인증률", "환급 금액", "환급일"};
+        String[] columnNames = {"스터디명", "보증금", "환급 금액", "환급일"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
 
         List<RefundInfoDTO> refundList = new RefundDAO().getRefundInfoList(user.getUserId());
@@ -30,7 +32,6 @@ public class RefundInfo extends JFrame {
             model.addRow(new Object[]{
                 dto.getStudyName(),
                 dto.getDeposit() + "P",
-                dto.getAttendanceRate() + "%",
                 dto.getRefundAmount() + "P",
                 dto.getRefundDate()
             });

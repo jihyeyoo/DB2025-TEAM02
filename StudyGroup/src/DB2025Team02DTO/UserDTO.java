@@ -1,5 +1,9 @@
 package DB2025Team02DTO;
 
+/**
+ * 사용자 정보를 담는 DTO 클래스입니다.
+ * 로그인 후 세션 유지, 마이페이지 정보 표시, 포인트 처리 등에서 사용됩니다.
+ */
 public class UserDTO {
     private int userId;
     private String loginId;

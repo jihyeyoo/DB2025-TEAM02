@@ -11,14 +11,16 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
-
-public class MyStudyDetailPage extends JFrame {
+/**
+ * 내가 가입한 스터디를 조회하는 화면에서 내가 가입한 스터디 중 특정 스터디를 선택해 상세 정보를 조회하는 화면을 구성하는 클래스입니다.
+ */
+public class MyStudyDetail extends JFrame {
 
     private MyStudyDetailDAO dao = new MyStudyDetailDAO();
 
     private JFrame previousPage;
 
-    public MyStudyDetailPage(int studyId, UserDTO user, JFrame previousPage) {
+    public MyStudyDetail(int studyId, UserDTO user, JFrame previousPage) {
         this.previousPage = previousPage;
 
         setTitle("📘 마이스터디 상세 페이지");
@@ -29,7 +31,7 @@ public class MyStudyDetailPage extends JFrame {
         MyStudyDetailDTO summary = dao.getStudySummary(studyId);
         List<StudyMemberDTO> members = dao.getMemberList(studyId);
         RuleDTO rule = dao.getRuleInfo(studyId);
-        boolean isLeader = dao.isLeader(user, studyId);
+        boolean isLeader = dao.isLeader(user.getUserId(), studyId);
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 5)); // 좌측 정렬, 간격 추가
         topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -84,7 +86,7 @@ public class MyStudyDetailPage extends JFrame {
                             if (success) {
                                 JOptionPane.showMessageDialog(this, m.getUserName() + " 강퇴 완료");
                                 dispose();  // 현재 페이지 닫고
-                                new MyStudyDetailPage(studyId, user, previousPage); // 새로고침
+                                new MyStudyDetail(studyId, user, previousPage); // 새로고침
                             } else {
                                 JOptionPane.showMessageDialog(this, "강퇴 실패. 다시 시도해주세요.");
                             }
@@ -121,9 +123,6 @@ public class MyStudyDetailPage extends JFrame {
         Font ruleFont = new Font("맑은 고딕", Font.PLAIN, 16);
 
         if (rule != null) {
-            JLabel label1 = new JLabel("인증 마감 시각: " + rule.getCertDeadline());
-            label1.setFont(ruleFont);
-            rulePanel.add(label1);
 
             JLabel label2 = new JLabel("인증 주기: " + rule.getCertCycle() + "일");
             label2.setFont(ruleFont);
@@ -166,6 +165,35 @@ public class MyStudyDetailPage extends JFrame {
         backButton.setBackground(Color.LIGHT_GRAY);
         backButton.setForeground(Color.BLACK);
         backPanel.add(backButton);
+        
+        // 벌금 부과 버튼
+        if (isLeader) {
+            JButton fineButton = new JButton("벌금 부과");
+            fineButton.setFont(new Font("맑은 고딕", Font.PLAIN, 18));
+            fineButton.setFocusPainted(false);
+            fineButton.setBackground(Color.PINK);
+            fineButton.setForeground(Color.BLACK);
+            
+            fineButton.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "지난 주차에 인증하지 않은 사용자에게 벌금을 부과하시겠습니까?",
+                        "벌금 부과 확인", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    String result = dao.imposeFineIfOverdue(studyId);
+                    if (result != null) {
+                        JOptionPane.showMessageDialog(this, result);
+                        dispose();
+                        new MyStudyDetail(studyId, user, previousPage);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "벌금을 부과할 대상자가 없습니다.");
+                    }
+
+                }
+            });
+
+            backPanel.add(fineButton);
+        }
+        
         bottomPanel.add(backPanel, BorderLayout.SOUTH);
 
         backButton.addActionListener(e -> {

@@ -7,9 +7,16 @@ import DB2025Team02DTO.LoginResultDTO;
 import DB2025Team02DTO.LoginResultDTO.LoginStatus;
 import DB2025Team02DTO.UserDTO;
 
+/**
+ * Login 화면에서 사용되는 DAO 클래스입니다. JDBC를 사용한 기능을 제공합니다.
+ */
 public class LoginDAO {
 	
-	
+	/** 회원가입한 사용자가 로그인을 하는 메서드입니다. login_id에 따라 db2025team02Users 테이블에서 password_hash를 조회하고, LoginResultDTO에 지정된 LoginStatus로 결과를 반환합니다.
+	결과에는 1. id에 따라 조회했을 때 db에 저장된 비밀번호 = 입력한 비밀번호 -> SUCCESS
+	 2. id에 따라 조회했을 때 db에 저장된 비밀번호 != 입력한 비밀번호 -> INVAILD_PASSOWRD
+	 3. db에 해당하는 loginId가 저장되어 있지 않은 경우 -> ID_NOT_FOUND
+	  세 가지 경우가 있습니다. */
     public LoginResultDTO login(String loginId, String password) {
         String sql = "SELECT * FROM db2025team02Users WHERE login_id = ?";
 

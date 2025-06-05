@@ -7,7 +7,11 @@ import DB2025Team02DAO.LoginDAO;
 import DB2025Team02DTO.LoginResultDTO;
 import DB2025Team02DTO.LoginResultDTO.LoginStatus;
 import DB2025Team02DTO.UserDTO;
+import DB2025Team02main.AppMain;
 
+/**
+ * 로그인을 위한 화면을 구성하는 클래스입니다.
+ */
 public class Login extends JFrame {
 
     public Login() {
@@ -78,6 +82,7 @@ public class Login extends JFrame {
 
                 if (result.getStatus() == LoginStatus.SUCCESS) {
                     UserDTO user = result.getUser();
+                    AppMain.currentUser = user;
                     JOptionPane.showMessageDialog(null, user.getUserName() + "님, 환영합니다!");
                     dispose();
                     new StudyList(user);

@@ -1,5 +1,9 @@
 package DB2025Team02DTO;
 
+/**
+ * 스터디 상세 정보를 담는 DTO 클래스입니다.
+ * 스터디 기본 정보와 규칙 정보를 함께 포함합니다.
+ */
 public class StudyDetailDTO {
     private String name;
     private String description;
