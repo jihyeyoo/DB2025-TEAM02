@@ -31,7 +31,7 @@ CREATE TABLE DB2025Team02StudyGroups (
     cert_method VARCHAR(50),                               -- 인증 방식
     deposit INT,                                           -- 보증금
     status ENUM('ongoing', 'closed') DEFAULT 'ongoing',  -- 스터디 상태
-    FOREIGN KEY (leader_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL
+    FOREIGN KEY (leader_id) REFERENCES DB2025Team02Users(user_id) ON DELETE SET NULL,
 
     -- 시작일이 종료일보다 이전에 있도록 수정
     CHECK (startDate <= endDate),
