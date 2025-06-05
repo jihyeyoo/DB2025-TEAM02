@@ -448,22 +448,88 @@ public class DailyCertsDAO {
 				int studyId = rs.getInt("study_id");
 				LocalDate certDate = rs.getDate("cert_date").toLocalDate();
 
-				int cycleNo = calculateCycleNo(studyId, certDate);
-				if (cycleNo != -1) {
-					try (PreparedStatement updateStmt = AppMain.conn.prepareStatement(updateSql)) {
-						updateStmt.setInt(1, cycleNo);
-						updateStmt.setInt(2, userId);
-						updateStmt.setInt(3, studyId);
-						updateStmt.setDate(4, Date.valueOf(certDate));
-						updateStmt.executeUpdate();
+				int thisCycleNo = calculateCycleNo(studyId, certDate);
+				int finalCycleNo = thisCycleNo;
 
+				// 지난 주차 인증 지각 제출 여부 확인
+				if (thisCycleNo > 1) {
+					boolean wasLate = wasCertifiedOnlyInGracePeriod(userId, studyId, certDate);
+					if (wasLate) {
+						finalCycleNo = thisCycleNo - 1;
 					}
+				}
+
+				try (PreparedStatement updateStmt = AppMain.conn.prepareStatement(updateSql)) {
+					updateStmt.setInt(1, finalCycleNo);
+					updateStmt.setInt(2, userId);
+					updateStmt.setInt(3, studyId);
+					updateStmt.setDate(4, Date.valueOf(certDate));
+
+					updateStmt.executeUpdate();
+
+					System.out.printf("▶ cycle_no 설정 완료: userId=%d, studyId=%d, certDate=%s, cycle_no=%d\n",
+							userId, studyId, certDate, finalCycleNo);
 				}
 			}
 		} catch (SQLException e) {
+			System.out.println("▶ cycle_no 업데이트 중 SQL 예외 발생");
 			e.printStackTrace();
 		}
 	}
+
+
+	/**
+	 * updateMissingCycleNos()함수 안에서 사용되는 함수로, 지난 주차 정규 인증이 없고, 해당 certDate가 유예기간 내에 있다면 true를 반환합니다.
+	 */
+	private boolean wasCertifiedOnlyInGracePeriod(int userId, int studyId, LocalDate certDate) {
+		RuleDTO rule = getRuleInfo(studyId);
+		if (rule == null || rule.getNextCertDate() == null) return false;
+
+		LocalDate thisCertEnd = rule.getNextCertDate().toLocalDate();
+		int certCycle = rule.getCertCycle();
+		int thisCycleNo = calculateCycleNo(studyId, certDate);
+		int lastCycleNo = thisCycleNo - 1;
+
+		if (thisCycleNo <= 1) return false;
+
+		// 지난 주차 정규 인증 기간 계산
+		LocalDate lastCycleStart = thisCertEnd.minusDays(2 * certCycle).plusDays(1);
+		LocalDate lastCycleEnd = thisCertEnd.minusDays(certCycle);
+
+		// grace 기간 계산
+		LocalDate graceStart = lastCycleEnd.plusDays(1);
+		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
+
+		// certDate가 grace 기간 내에 있어야 함
+		if (certDate.isBefore(graceStart) || certDate.isAfter(graceEnd)) return false;
+
+		// 지난 주차 정규 인증이 있었는지 확인
+		String sql = """
+        SELECT 1 FROM db2025team02DailyCerts
+        WHERE user_id = ? AND study_id = ? 
+        AND cert_date BETWEEN ? AND ?
+        AND cycle_no = ?
+        AND approval_status != 'rejected'
+        LIMIT 1
+    """;
+
+		try (PreparedStatement stmt = AppMain.conn.prepareStatement(sql)) {
+			stmt.setInt(1, userId);
+			stmt.setInt(2, studyId);
+			stmt.setDate(3, Date.valueOf(lastCycleStart));
+			stmt.setDate(4, Date.valueOf(lastCycleEnd));
+			stmt.setInt(5, lastCycleNo);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				boolean hadRegular = rs.next();
+				return !hadRegular;  // 정규 인증 없고, certDate는 grace 내니까 true
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 
 
 
