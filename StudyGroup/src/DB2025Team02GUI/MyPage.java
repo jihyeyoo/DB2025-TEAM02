@@ -5,6 +5,8 @@ import javax.swing.*;
 import DB2025Team02DAO.ChargePointDAO;
 import DB2025Team02DAO.MyPageDAO;
 import DB2025Team02DTO.UserDTO;
+import DB2025Team02main.AppMain;
+
 import java.awt.*;
 /**
  * 마이페이지 화면을 구성하는 클래스입니다.
@@ -50,7 +52,7 @@ public class MyPage extends JFrame {
         listButton.setBounds(380, 270, 220, 50);
         add(listButton);
         
-        JButton certButton = new JButton("인증 제출");
+        JButton certButton = new JButton("인증 관리");
         certButton.setFont(font);
         certButton.setBounds(380, 330, 220, 50);
         add(certButton);
@@ -98,6 +100,7 @@ public class MyPage extends JFrame {
         refundButton.addActionListener(e -> new RefundInfo(user));
 
         logoutButton.addActionListener(e -> {
+            AppMain.currentUser = null;
             dispose();
             new Login();
         });
@@ -111,7 +114,9 @@ public class MyPage extends JFrame {
             );
 
             if (choice == JOptionPane.YES_OPTION) {
+
                 boolean success = MyPageDAO.withdrawUser(user);
+
 
                 if (success) {
                     JOptionPane.showMessageDialog(
@@ -120,6 +125,7 @@ public class MyPage extends JFrame {
                             "알림",
                             JOptionPane.INFORMATION_MESSAGE
                     );
+                    AppMain.currentUser = null;
                     Window window = SwingUtilities.getWindowAncestor(withDrawButton);
                     if (window != null) {
                         new Login();
