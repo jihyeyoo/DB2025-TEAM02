@@ -158,20 +158,20 @@ public class MyStudyDetailDAO {
 	    DailyCertsDAO certDAO = new DailyCertsDAO();
 
 
-	    String deductPointSQL = "UPDATE db2025team02Users SET points = points - ? WHERE user_id = ?";
-	    String addFineSQL = "UPDATE db2025team02GroupMembers SET accumulated_fine = accumulated_fine + ? WHERE study_id = ? AND user_id = ?";
-		String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, reason, amount, date) VALUES (?, ?,  ?, ?, ?)";
+	    String deductPointSQL = "UPDATE db2025team02Users SET points = points - ? WHERE user_id = ?"; /**포인트를 차감*/
+	    String addFineSQL = "UPDATE db2025team02GroupMembers SET accumulated_fine = accumulated_fine + ? WHERE study_id = ? AND user_id = ?";/**누적 벌금 증가*/
+		String insertFineSQL = "INSERT INTO db2025team02Fines (user_id, study_id, reason, amount, date) VALUES (?, ?,  ?, ?, ?)";/**Fines기록추가*/
 
-		String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?";
-	    String suspendUserSQL = "UPDATE db2025team02GroupMembers SET status = 'suspended' WHERE study_id = ? AND user_id = ?";
-		String checkAlreadyFinedSQL = "SELECT 1 FROM db2025team02Fines WHERE user_id = ? AND study_id = ? AND reason = ? AND date BETWEEN ? AND ?";
+		String checkPointSQL = "SELECT points FROM db2025team02Users WHERE user_id = ?"; /**포인트 조회*/
+	    String suspendUserSQL = "UPDATE db2025team02GroupMembers SET status = 'suspended' WHERE study_id = ? AND user_id = ?"; /**유저 정지시키기*/
+		String checkAlreadyFinedSQL = "SELECT 1 FROM db2025team02Fines WHERE user_id = ? AND study_id = ? AND reason = ? AND date BETWEEN ? AND ?"; /**Fine이 있는지 검사*/
 
 
-		LocalDate certEnd = rule.getNextCertDate().toLocalDate().minusDays(rule.getCertCycle()); // 기준일에서 한 주 전이 마지막 날
-		LocalDate certStart = certEnd.minusDays(rule.getCertCycle() - 1); // 시작일
+		LocalDate certEnd = rule.getNextCertDate().toLocalDate().minusDays(rule.getCertCycle()); /**인증 마감일*/
+		LocalDate certStart = certEnd.minusDays(rule.getCertCycle() - 1); /**인증 시작일*/
 
-		LocalDate graceStart = certEnd.plusDays(1);
-		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
+		LocalDate graceStart = certEnd.plusDays(1);/**유예 시작일*/
+		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);/**유예 마감일*/
 		java.sql.Date certStartDate = java.sql.Date.valueOf(certStart);
 		java.sql.Date certEndDate = java.sql.Date.valueOf(certEnd);
 
@@ -191,7 +191,6 @@ public class MyStudyDetailDAO {
 				String reason = null;
 				int fine = 0;
 //
-				System.out.println("──────────── 인증 평가 ──────────────");
 				System.out.println("스터디원 ID: " + userId);
 				System.out.println("지난 인증 기간: " + certStartDate + " ~ " + certEndDate);
 
@@ -238,7 +237,7 @@ public class MyStudyDetailDAO {
 				}
 
 
-				// 포인트 확인
+				/**포인트 확인*/
 	            int userPoints = 0;
 	            try (PreparedStatement checkStmt = AppMain.conn.prepareStatement(checkPointSQL)) {
 	                checkStmt.setInt(1, userId);
@@ -248,7 +247,7 @@ public class MyStudyDetailDAO {
 	                }
 	            }
 
-	            // 포인트 차감 가능하면 벌금 부과
+				/**포인트 차감 가능하면 벌금 부과*/
 	            if (userPoints >= fine) {
 	                try (PreparedStatement deductStmt = AppMain.conn.prepareStatement(deductPointSQL)) {
 	                    deductStmt.setInt(1, fine);
@@ -278,7 +277,7 @@ public class MyStudyDetailDAO {
 					finedCount++;
 
 	            } else {
-	                // 포인트 부족 → 정지 처리
+					/**포인트 부족하면 'suspend'로 처리*/
 					if (!isLeader(userId, studyId)) {
 						try (PreparedStatement suspendStmt = AppMain.conn.prepareStatement(suspendUserSQL)) {
 							suspendStmt.setInt(1, studyId);
@@ -297,7 +296,7 @@ public class MyStudyDetailDAO {
 	            }
 	        }
 
-	        AppMain.conn.commit(); // 트랜잭션 커밋
+	        AppMain.conn.commit();
 	        AppMain.conn.setAutoCommit(true);
 			return finedCount > 0 ? resultMsg.toString() : null;
 

@@ -44,13 +44,13 @@ public class DailyCertsDAO {
 
 			RuleDTO rule = getRuleInfo(studyId);
 			LocalDate nextCertDate = rule.getNextCertDate().toLocalDate();
-			int certCycle = rule.getCertCycle();
-			int gracePeriod = rule.getGracePeriod();
-			int cycleNo = calculateCycleNo(studyId, certDate);
+			int certCycle = rule.getCertCycle(); /**rule 테이블의 certCycle조회*/
+			int gracePeriod = rule.getGracePeriod();/**인증 기간 계산*/
+			int cycleNo = calculateCycleNo(studyId, certDate);/**현재 인증 주기 구하기*/
 
-			LocalDate prevCertEnd = nextCertDate.minusDays(certCycle);
-			LocalDate graceStart = prevCertEnd.plusDays(1);
-			LocalDate graceEnd = graceStart.plusDays(gracePeriod - 1);
+			LocalDate prevCertEnd = nextCertDate.minusDays(certCycle);/**지난 인증 마감 일자*/
+			LocalDate graceStart = prevCertEnd.plusDays(1);/**지난 유예 시작 일자*/
+			LocalDate graceEnd = graceStart.plusDays(gracePeriod - 1);/**지난 유예 마감 일자*/
 
 			boolean inPrevCycleGrace = !certDate.isBefore(graceStart) && !certDate.isAfter(graceEnd);
 			boolean prevCycleAlreadyCertified = hasCertifiedCycle(userId, studyId, cycleNo - 1);
@@ -104,7 +104,7 @@ public class DailyCertsDAO {
 
 					long daysBetween = ChronoUnit.DAYS.between(startDate, certDate);
 
-					// 첫 주차 보정: certDate가 startDate로부터 certCycle일 미만일 경우 무조건 week 1
+					/** 첫 주차 보정 - certDate가 startDate로부터 certCycle일 미만일 경우 무조건 week 1*/
 					if (daysBetween < certCycle) {
 						return 1;
 					}
@@ -115,7 +115,7 @@ public class DailyCertsDAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return -1; // 조회 실패 시
+		return -1;
 	}
 
 	/** 이미 해당 주차에 인증한 내역이 있으면 다시 인증을 막아두기 위한 메서드입니다. approval_status가 rejected인 경우는 인증하지 않은 것으로 처리하고, 사용자가 다시 인증을 제출할 수 있도록 합니다. */
@@ -288,14 +288,14 @@ public class DailyCertsDAO {
 		boolean isRejected = hasRejectedCert(userId, dto.getStudyId(), thisCycleNo);
 		boolean inPrevGrace = isPrevCycleInGracePeriod(dto.getStudyId());
 
-		// 지각 제출 가능
+		/**지각 제출 가능*/
 		if (prevCycleNo > 1 && !hasPrevCycleCert && inPrevGrace) {
 			LocalDate prevDeadline = dto.getNextCertDate().toLocalDate().minusDays(certCycle);
 			LocalDate graceStart = prevDeadline.plusDays(1);
 			return new CertStatusDTO(graceStart + " (지각)", "지난 주차 지각 제출 가능");
 		}
 
-		// 이번 주차 기준 상태
+		/**이번 주차 기준 상태*/
 		String deadlineStr = dto.getNextCertDate().toString();
 		if (isRejected && !hasThisCycleCert) {
 			return new CertStatusDTO(deadlineStr, "반려됨");
@@ -317,7 +317,7 @@ public class DailyCertsDAO {
 			return true;
 		}
 		if (rule == null || rule.getNextCertDate() == null || rule.getCertCycle() <= 0) {
-			return false;  // 규칙 정보 없으면 기본적으로 false 반환
+			return false;  /** 규칙 정보 없으면 기본적으로 false 반환*/
 		}
 		LocalDate certEnd = rule.getNextCertDate().toLocalDate().minusDays(rule.getCertCycle()); // 기준일에서 한 주 전이 마지막 날
 		LocalDate certStart = certEnd.minusDays(rule.getCertCycle() - 1); // 시작일
@@ -368,12 +368,12 @@ public class DailyCertsDAO {
 		}
 
 
-		// 지난 주차의 grace 기간 계산
+		/**지난 주차의 grace 기간 계산*/
 		LocalDate lastCycleEnd = thisCertEnd.minusDays(certCycle);
 		LocalDate graceStart = lastCycleEnd.plusDays(1);
 		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
 
-		System.out.println("=== [지난 주차 유예기간 인증 여부 확인] ===");
+		System.out.println("------[지난 주차 유예기간 인증 여부 확인]------");
 		System.out.println("▶ userId: " + userId + ", studyId: " + studyId);
 		System.out.println("▶ certCycle: " + certCycle + ", gracePeriod: " + rule.getGracePeriod());
 		System.out.println("▶ thisCycleNo: " + thisCycleNo + ", lastCycleNo: " + lastCycleNo);
@@ -451,7 +451,7 @@ public class DailyCertsDAO {
 				int thisCycleNo = calculateCycleNo(studyId, certDate);
 				int finalCycleNo = thisCycleNo;
 
-				// 지난 주차 인증 지각 제출 여부 확인
+				/**지난 주차 지각 제출 여부 확인*/
 				if (thisCycleNo > 1) {
 					boolean wasLate = wasCertifiedOnlyInGracePeriod(userId, studyId, certDate);
 					if (wasLate) {
@@ -491,19 +491,19 @@ public class DailyCertsDAO {
 		int lastCycleNo = thisCycleNo - 1;
 
 		if (thisCycleNo <= 1) return false;
-
-		// 지난 주차 정규 인증 기간 계산
+		/**지난 주차 정규 인증 기간 계산*/
+		//
 		LocalDate lastCycleStart = thisCertEnd.minusDays(2 * certCycle).plusDays(1);
 		LocalDate lastCycleEnd = thisCertEnd.minusDays(certCycle);
 
-		// grace 기간 계산
+		/**grace 기간 계산*/
 		LocalDate graceStart = lastCycleEnd.plusDays(1);
 		LocalDate graceEnd = graceStart.plusDays(rule.getGracePeriod() - 1);
 
-		// certDate가 grace 기간 내에 있어야 함
+		/**certDate가 grace 기간 내에 있어야 함*/
 		if (certDate.isBefore(graceStart) || certDate.isAfter(graceEnd)) return false;
 
-		// 지난 주차 정규 인증이 있었는지 확인
+		/**지난 주차 정규 인증이 있었는지 확인*/
 		String sql = """
         SELECT 1 FROM db2025team02DailyCerts
         WHERE user_id = ? AND study_id = ? 
@@ -522,7 +522,7 @@ public class DailyCertsDAO {
 
 			try (ResultSet rs = stmt.executeQuery()) {
 				boolean hadRegular = rs.next();
-				return !hadRegular;  // 정규 인증 없고, certDate는 grace 내니까 true
+				return !hadRegular;  /**정규 인증 없고, certDate는 grace 내니까 true*/
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
